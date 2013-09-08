@@ -37,6 +37,11 @@ DESCRIPTION
       The --scale optional argument specifies the scale of the distance values.
       A value of 'std' means to use the standard scale of 0 to 1.  A value of
       'inf' means to use a scale from 0 to infinity.
+
+      The --timeout optional argument specifies the number of seconds to wait
+      for a response from the server.  The default is 1800 seconds or 30
+      minutes.  A larger timeout might be required if there are many input
+      sequence files or the sequence files are large.
 '''
 
 desc3 = '''
@@ -48,8 +53,7 @@ EXAMPLES
       > cbd-buildmatrix --format fastq mystudy.input mystudy.csv
 
 AUTHORS
-      Fang Yang, Nicholas Chia, Bryan A White, Lawrence B Schook, Patricio
-      Jeraldo, Mike Mundy
+      Mike Mundy, Fang Yang, Nicholas Chia, Patricio Jeraldo 
 '''
 
 if __name__ == "__main__":
@@ -60,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument('-?', '--usage', help='show usage information', action='store_true', dest='usage')
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default='fasta')
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
+    parser.add_argument('-t', '--timeout', help='number of seconds to wait for server response', dest='timeout', default='1800')
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://kbase.us/services/shock-api/')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
@@ -118,7 +123,7 @@ if __name__ == "__main__":
         input['node_ids'].append(node['id'])
         
     # Create a cbd client.
-    cbdClient = CompressionBasedDistance(get_url())
+    cbdClient = CompressionBasedDistance(url=get_url(), timeout=args.timeout)
     
     # Run the function to build the matrix
     print "Calculating distance matrix"
