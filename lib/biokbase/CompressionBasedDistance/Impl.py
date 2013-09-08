@@ -9,6 +9,22 @@ from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command
 from multiprocessing import Pool
 from itertools import combinations
 
+# Exception thrown when extract sequences failed
+class ExtractError(Exception):
+    pass
+
+# Exception thrown when sorting a sequence file failed
+class SortError(Exception):
+    pass
+
+# Exception thrown when merging sequence files failed
+class MergeError(Exception):
+    pass
+
+# Exception thrown when compressing a sequence file failed
+class CompressError(Exception):
+    pass
+
 #END_HEADER
 
 '''
@@ -36,7 +52,7 @@ class CompressionBasedDistance:
     #BEGIN_CLASS_HEADER
  
     def _cbdCalculator(self, fileList, scale):
-        #parse it
+        # Parse the files.
         single_sizes= dict()
         pair_sizes= dict()
         
@@ -44,13 +60,12 @@ class CompressionBasedDistance:
             # Should strip prefix too
             fbase = os.path.basename(sourceFile)
             fname = fbase.strip('.sorted.xz')
-            print fbase, fname
             if '.' in fname:
                 pair_sizes[fname] = os.path.getsize(sourceFile)
             else:
                 single_sizes[fname] = os.path.getsize(sourceFile)
                 
-        #map names to indices
+        # Map file names to indices.
         fnames= single_sizes.keys()
         fnames.sort()
         indices= dict()
@@ -58,11 +73,9 @@ class CompressionBasedDistance:
         for name,i in zip(fnames, range(len(fnames))):
             indices[name]= i
         
-        #now compute the scores
+        # Compute the distance scores.
         pair_names= pair_sizes.keys()
-        
         cbd_array= numpy.zeros((len(fnames),len(fnames)), dtype=float)
-        
         for pair in pair_names:
             name1, name2= pair.split('.')
             c1 = single_sizes[name1]
@@ -74,12 +87,9 @@ class CompressionBasedDistance:
             cbd_array[indices[name1],indices[name2]] = distance
             cbd_array[indices[name2],indices[name1]] = distance
             
-        #output as CSV
+        # Build the output array in CSV format.
         output = []
-        #first the first row
-        output.append('ID,' + ','.join(fnames) + '\n')
-        #now the rest
-        
+        output.append('ID,' + ','.join(fnames) + '\n') # first row has header
         for i in range(len(fnames)):
             output.append(fnames[i] + ',' + ','.join(['{0:g}'.format(x) for x in cbd_array[i,:]]) + '\n')
         
@@ -113,20 +123,20 @@ class CompressionBasedDistance:
             self.config = config
             
         # Convert flag to boolean value (a number greater than zero or the string 'True' turns the flag on).
-        if self.config["debug"].isdigit():
-            if int(self.config["debug"]) > 0:
-                self.config["debug"] = True
+        if self.config['debug'].isdigit():
+            if int(self.config['debug']) > 0:
+                self.config['debug'] = True
             else:
-                self.config["debug"] = False
+                self.config['debug'] = False
         else:
-            if self.config["debug"] == "True":
-                self.config["debug"] = True
+            if self.config['debug'] == 'True':
+                self.config['debug'] = True
             else:
-                self.config["debug"] = False
+                self.config['debug'] = False
             
         # Create the data folder if it does not exist.
-        if not os.path.exists(config["work_folder_path"]):
-            os.makedirs(config["work_folder_path"], 0775)
+        if not os.path.exists(self.config['work_folder_path']):
+            os.makedirs(self.config['work_folder_path'], 0775)
 
         #END_CONSTRUCTOR
         pass
@@ -135,6 +145,8 @@ class CompressionBasedDistance:
         # self.ctx is set by the wsgi application class
         # return variables are: output
         #BEGIN build_matrix
+        
+        print self.ctx
         
         # Create a shock client and authenticate as the user.
         shockClient = ShockClient(self.config['shock_url'], input['auth'])
@@ -145,27 +157,20 @@ class CompressionBasedDistance:
         # Create a process pool.
         pool = Pool(processes=int(self.config['num_pool_processes']))
         
-        # Download input fasta files from Shock to work directory.
-        fastaList = []
-        for nodeId in input['node_ids']:
-            node = shockClient.get_node(nodeId)
-            filename = os.path.join(workFolder, node['file']['name'])
-            shockClient.download_to_path(nodeId, filename)
-            fastaList.append(filename)
-        
-        # Extract the sequences from each fasta file.
+        # Download input fasta files from Shock and extract sequences to work directory.
         resultList = []
         sequenceList = []
-        for sourceFile in fastaList:
+        for nodeId in input['node_ids']:
+            node = shockClient.get_node(nodeId)
+            sourceFile = os.path.join(workFolder, node['file']['name'])
             destFile = '%s.sequence' %(os.path.splitext(sourceFile)[0])
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (sourceFile, input['format'], destFile,))
+            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, self.config['shock_url'], input['auth'],))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, workFolder, pool)
-                # raise exception
-                print "extracting sequences failed"
+                raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
             
         # Sort the sequences.
         resultList = []
@@ -179,8 +184,7 @@ class CompressionBasedDistance:
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, workFolder, pool)
-                # raise exception
-                print "sorting sequences failed"
+                raise SortError("Error sorting sequence file, result: %d" %(result.get()))
              
         # Create combined and sorted files.   
         resultList = []
@@ -196,8 +200,7 @@ class CompressionBasedDistance:
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, workFolder, pool)
-                # raise exception
-                print "sorting sequences failed"
+                raise MergeError("Error merging sequence files, result: %d" %(result.get()))
                    
         # Compress all sorted files
         resultList = []
@@ -210,12 +213,9 @@ class CompressionBasedDistance:
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, workFolder, pool)
-                # raise exception
-                print "compressing sequences failed"
+                raise CompressError("Error compressing sequence file, result: %d" %(result.get()))
         
         # Calculate
-        for sourceFile in compressedList:
-            print sourceFile
         output = self._cbdCalculator(compressedList, input['scale'])
         
         # Cleanup after ourselves.

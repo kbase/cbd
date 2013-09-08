@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
 from ConfigParser import ConfigParser
 from Bio import SeqIO
 
@@ -61,7 +62,12 @@ def get_config(filename):
         retconfig[nameval[0]] = nameval[1]
     return retconfig
 
-def extract_seq(sourceFile, format, destFile):
+def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
+    # Download the file from Shock to the working directory.
+    shockClient = ShockClient(shockUrl, auth)
+    shockClient.download_to_path(nodeId, sourceFile)
+
+    # Extract the sequences from the source file.
     with open(destFile, 'w') as f:
         for seqRecord in SeqIO.parse(sourceFile, format):
             f.write(str(seqRecord.seq) + '\n')
