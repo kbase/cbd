@@ -26,14 +26,12 @@ module CompressionBasedDistance
 		list<string> node_ids - List of Shock node ids for sequence files
 		string format - Format of input sequence files ('fasta', 'fastq', etc.)
 		string scale - Scale for distance matrix values ('std' or 'inf')
-		string auth - Authorization token for user
 			
 	*/
 	typedef structure {
 		list<string> node_ids;
 		string format;
 		string scale;
-		string auth;		
 	} BuildMatrixParams;
 	
 	/*
@@ -43,6 +41,7 @@ module CompressionBasedDistance
       microbial communities.  Returns an array of lines where each line is a
       line in the distance matrix in csv format.
 	*/
-	funcdef build_matrix(BuildMatrixParams input) returns(list<string> output);
+	funcdef build_matrix(BuildMatrixParams input)
+		returns(list<string> output) authentication required;
 	
 };
