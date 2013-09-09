@@ -146,10 +146,8 @@ class CompressionBasedDistance:
         # return variables are: output
         #BEGIN build_matrix
         
-        print self.ctx
-        
         # Create a shock client and authenticate as the user.
-        shockClient = ShockClient(self.config['shock_url'], input['auth'])
+        shockClient = ShockClient(self.config['shock_url'], self.ctx['token'])
         
         # Create a work directory for storing intermediate files.
         workFolder = tempfile.mkdtemp('', '', self.config["work_folder_path"])
@@ -165,7 +163,7 @@ class CompressionBasedDistance:
             sourceFile = os.path.join(workFolder, node['file']['name'])
             destFile = '%s.sequence' %(os.path.splitext(sourceFile)[0])
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, self.config['shock_url'], input['auth'],))
+            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, self.config['shock_url'], self.ctx['token'],))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:

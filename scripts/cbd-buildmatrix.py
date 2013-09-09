@@ -4,7 +4,7 @@ import os
 #from shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
-from biokbase.CompressionBasedDistance.Helpers import get_url, set_url, get_auth_token
+from biokbase.CompressionBasedDistance.Helpers import get_url
 
 desc1 = '''
 NAME
@@ -77,13 +77,15 @@ if __name__ == "__main__":
 
     # Create input parameters for build_matrix() function.
     input = { }
-    input['auth'] = get_auth_token()
     input['format'] = args.format
     input['scale'] = args.scale
     input['node_ids'] = [ ]
+
+    # Create a cbd client (which must be authenticated).
+    cbdClient = CompressionBasedDistance(url=get_url(), timeout=args.timeout)
     
     # Create a shock client.
-    shockClient = ShockClient(args.shockurl, input['auth'])
+    shockClient = ShockClient(args.shockurl, cbdClient._headers['AUTHORIZATION'])
     
     # Open the input file with the list of files.
     try:
@@ -122,9 +124,6 @@ if __name__ == "__main__":
         node = shockClient.create_node(filename, '') # Do I need attributes on the files?
         input['node_ids'].append(node['id'])
         
-    # Create a cbd client.
-    cbdClient = CompressionBasedDistance(url=get_url(), timeout=args.timeout)
-    
     # Run the function to build the matrix
     print "Calculating distance matrix"
     output = cbdClient.build_matrix(input)
