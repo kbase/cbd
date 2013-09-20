@@ -62,6 +62,12 @@ def get_config(filename):
         retconfig[nameval[0]] = nameval[1]
     return retconfig
 
+def make_job_dir(workDirectory, jobID):
+    jobDirectory = os.path.join(workDirectory, jobID)
+    if not os.path.exists(jobDirectory):
+        os.makedirs(jobDirectory, 0775)
+    return jobDirectory
+
 def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
     # Download the file from Shock to the working directory.
     shockClient = ShockClient(shockUrl, auth)

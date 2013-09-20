@@ -9,8 +9,10 @@ the fact that more repetitive data is the more it can be compressed.  By
 combining 16S rRNA hypervariable tag data from different samples and assessing
 the relative amounts of compression, there is a proxy for the similarities
 between the communities.  The amount of compression is converted to a distance
-with a minimum of 0 and a maximum of 1 by taking compression gained by combining
-the datasets over the total compressed size of the individual datasets.
+by taking compression gained by combining the datasets over the total
+compressed size of the individual datasets.  The distance has a value with a
+minimum of 0 meaning the communities are the same and a maximum of 1 meaning
+the communities are completely different.
 
 */
 
@@ -21,9 +23,12 @@ module CompressionBasedDistance
 	/* CBD FUNCTIONS */
 	/* ************************************************************************************* */
 	
+	/* All methods are authenticated. */
+	authentication required;
+
 	/* Input parameters for build_matrix function
 	
-		list<string> node_ids - List of Shock node ids for sequence files
+		list<string> node_ids - List of Shock node ids for input sequence files
 		string format - Format of input sequence files ('fasta', 'fastq', etc.)
 		string scale - Scale for distance matrix values ('std' or 'inf')
 			
@@ -38,10 +43,9 @@ module CompressionBasedDistance
       Build a distance matrix from a set of sequence files for microbiota
       comparisons.  Compression based distance uses the relative compression
       of combined and individual datasets to quantify overlaps between
-      microbial communities.  Returns an array of lines where each line is a
-      line in the distance matrix in csv format.
+      microbial communities.  Returns the job identifier of the job submitted
+      to build the distance matrix.
 	*/
-	funcdef build_matrix(BuildMatrixParams input)
-		returns(list<string> output) authentication required;
+	funcdef build_matrix(BuildMatrixParams input) returns(string job_id);
 	
 };

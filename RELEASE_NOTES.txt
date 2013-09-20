@@ -8,8 +8,10 @@ the fact that more repetitive data is the more it can be compressed.  By
 combining 16S rRNA hypervariable tag data from different samples and assessing
 the relative amounts of compression, there is a proxy for the similarities
 between the communities.  The amount of compression is converted to a distance
-with a minimum of 0 and a maximum of 1 by taking compression gained by combining
-the datasets over the total compressed size of the individual datasets.
+by taking compression gained by combining the datasets over the total
+compressed size of the individual datasets.  The distance has a value with a
+minimum of 0 meaning the communities are the same and a maximum of 1 meaning
+the communities are completely different. 
 
 [1] Fang Yang, Nicholas Chia, Bryan A White and Lawrence B Schook.
 Compression-based distance (CBD): a simple, rapid, and accurate method for
@@ -19,7 +21,7 @@ VERSION: 1.0.0 (Released 09/04/2013)
 ------------------------------------------
 NEW FEATURES:
 -This is the first public release of the Compression Based Distance service.
--added method and command script to build a distance matrix
+-added method and command scripts to build a distance matrix
 
 UPDATED FEATURES / MAJOR BUG FIXES:
 -none.

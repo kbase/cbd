@@ -1,6 +1,8 @@
 import unittest
 import sys
 import os
+import time
+import subprocess
 from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
 from biokbase.CompressionBasedDistance.Helpers import get_config
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
@@ -14,7 +16,7 @@ class TestPythonClient(unittest.TestCase):
         self._config = get_config(os.environ["KB_TEST_CONFIG"])
 
     def test_buildmatrix(self):
-        ''' Run buildmatrix() with four simple sequence files and verify the returned distance matrix.'''
+        ''' Run build_matrix() with four simple sequence files and verify the returned distance matrix.'''
 
         # Create a client.
         cbdClient = CompressionBasedDistance(self._config["cbd_url"], user_id=self._config["test_user"], password=self._config["test_pwd"])
@@ -22,7 +24,6 @@ class TestPythonClient(unittest.TestCase):
         
         # Create the input parameters.
         input = dict()
-        input['auth'] = token
         input['format'] = 'fasta'
         input['scale'] = 'std'
         input['node_ids'] = list()
@@ -34,15 +35,28 @@ class TestPythonClient(unittest.TestCase):
             input['node_ids'].append(node['id'])
         
         # Run the buildmatrix() function to generate a distance matrix.
-        output = cbdClient.build_matrix(input)
+        jobid = cbdClient.build_matrix(input)
+
+        # Wait for the distance matrix to be built.
+        time.sleep(30)
+
+        # Get the distance matrix and save to a file.
+        outputPath = 'client-tests/unittest.csv'
+        args = [ os.path.join(os.environ['TARGET'], 'bin/cbd-getmatrix'), jobid,  outputPath ]
+        proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        (so, se) = proc.communicate()
+        self.assertEqual(proc.returncode, 0)
         
         # Confirm the returned distance matrix matches the saved valid output.
         vf = open('client-tests/output.csv', 'r')
-        for index in range(0,len(output)):
-            line = vf.readline()
-            self.assertEqual(line, output[index])
-        self.assertEqual(vf.readline(), '')
+        tf = open(outputPath, 'r')
+        for vline in vf: 
+            tline = tf.readline()
+            self.assertEqual(vline, tline)
+        self.assertEqual(tf.readline(), '')
         vf.close()
+        tf.close()
+        os.remove(outputPath)
         
 if __name__ == '__main__':
     # Create a suite, add tests to the suite, run the suite.
