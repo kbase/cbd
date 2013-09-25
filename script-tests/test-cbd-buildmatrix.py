@@ -3,6 +3,7 @@ import unittest
 import subprocess
 import time
 import os
+from biokbase.CompressionBasedDistance.Helpers import get_config
 
 class TestBuildMatrixScript(unittest.TestCase):
     '''
@@ -11,6 +12,9 @@ class TestBuildMatrixScript(unittest.TestCase):
         
     def setUp(self):
         self.cmd = os.path.join(os.environ['TARGET'], 'bin/cbd-buildmatrix')
+        self._config = get_config(os.environ["KB_TEST_CONFIG"])
+        args = [ 'kbase-login', self._config['test_user'], '--password', self._config['test_pwd'] ]
+        proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 
     def tearDown(self):
         if os.path.exists('list.input'):
