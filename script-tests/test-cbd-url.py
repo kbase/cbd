@@ -7,7 +7,7 @@ from biokbase.CompressionBasedDistance.Helpers import get_config
 class TestUrlScript(unittest.TestCase):
     
     def setUp(self):
-        self.cmd = os.path.join(os.environ["TARGET"], "bin/cbd-url")
+        self.cmd = os.path.join(os.environ["KB_TOP"], "bin/cbd-url")
         self.config = get_config(os.environ["KB_TEST_CONFIG"])
         
     def test_current(self):

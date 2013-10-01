@@ -11,7 +11,7 @@ class TestBuildMatrixScript(unittest.TestCase):
     '''
         
     def setUp(self):
-        self.cmd = os.path.join(os.environ['TARGET'], 'bin/cbd-buildmatrix')
+        self.cmd = os.path.join(os.environ['KB_TOP'], 'bin/cbd-buildmatrix')
         self._config = get_config(os.environ["KB_TEST_CONFIG"])
         args = [ 'kbase-login', self._config['test_user'], '--password', self._config['test_pwd'] ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)

@@ -42,7 +42,7 @@ class TestPythonClient(unittest.TestCase):
 
         # Get the distance matrix and save to a file.
         outputPath = 'client-tests/unittest.csv'
-        args = [ os.path.join(os.environ['TARGET'], 'bin/cbd-getmatrix'), jobid,  outputPath ]
+        args = [ os.path.join(os.environ['KB_TOP'], 'bin/cbd-getmatrix'), jobid,  outputPath ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 0)

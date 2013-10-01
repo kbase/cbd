@@ -10,7 +10,7 @@ class TestGetMatrixScript(unittest.TestCase):
     '''
         
     def setUp(self):
-        self.cmd = os.path.join(os.environ['TARGET'], 'bin/cbd-getmatrix')
+        self.cmd = os.path.join(os.environ['KB_TOP'], 'bin/cbd-getmatrix')
 
     def test_help(self):
         '''Run cbd-getmatrix --help and verify that the major sections in the help text are present'''
