@@ -3,6 +3,7 @@ import unittest
 import subprocess
 import time
 import os
+import shutil
 from biokbase.CompressionBasedDistance.Helpers import get_config
 
 class TestBuildMatrixScript(unittest.TestCase):
@@ -13,12 +14,22 @@ class TestBuildMatrixScript(unittest.TestCase):
     def setUp(self):
         self.cmd = os.path.join(os.environ['KB_TOP'], 'bin/cbd-buildmatrix')
         self._config = get_config(os.environ["KB_TEST_CONFIG"])
+        configPath = os.path.join(os.environ['HOME'], '.kbase_config')
+        if os.path.exists(configPath):
+            shutil.copy(configPath, os.path.join(os.environ['HOME'], '.kbase_config.saved'))
         args = [ 'kbase-login', self._config['test_user'], '--password', self._config['test_pwd'] ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        proc.communicate()
 
     def tearDown(self):
         if os.path.exists('list.input'):
             os.remove('list.input')
+        configPath = os.path.join(os.environ['HOME'], '.kbase_config')
+        os.remove(configPath)
+        savedConfigPath = os.path.join(os.environ['HOME'], '.kbase_config.saved')
+        if os.path.exists(savedConfigPath):
+            shutil.copy(savedConfigPath, configPath)
+            os.remove(savedConfigPath)
 
     def test_help(self):
         '''Run cbd-buildmatrix --help and verify that the major sections in the help text are present'''

@@ -3,6 +3,7 @@ import sys
 import os
 import time
 import subprocess
+import shutil
 from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
 from biokbase.CompressionBasedDistance.Helpers import get_config
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
@@ -14,6 +15,23 @@ class TestPythonClient(unittest.TestCase):
     def setUp(self):
         # Set configuration variables.
         self._config = get_config(os.environ["KB_TEST_CONFIG"])
+
+        # Login as the test user and save current login credentials.
+        configPath = os.path.join(os.environ['HOME'], '.kbase_config')
+        if os.path.exists(configPath):
+            shutil.copy(configPath, os.path.join(os.environ['HOME'], '.kbase_config.saved'))
+        args = [ 'kbase-login', self._config['test_user'], '--password', self._config['test_pwd'] ]
+        proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        proc.communicate()
+
+    def tearDown(self):
+        # Restore prior login credentials.
+        configPath = os.path.join(os.environ['HOME'], '.kbase_config')
+        os.remove(configPath)
+        savedConfigPath = os.path.join(os.environ['HOME'], '.kbase_config.saved')
+        if os.path.exists(savedConfigPath):
+            shutil.copy(savedConfigPath, configPath)
+            os.remove(savedConfigPath)
 
     def test_buildmatrix(self):
         ''' Run build_matrix() with four simple sequence files and verify the returned distance matrix.'''
@@ -45,6 +63,9 @@ class TestPythonClient(unittest.TestCase):
         args = [ os.path.join(os.environ['KB_TOP'], 'bin/cbd-getmatrix'), jobid,  outputPath ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
+        if proc.returncode != 0:
+            print so
+            print se
         self.assertEqual(proc.returncode, 0)
         
         # Confirm the returned distance matrix matches the saved valid output.
