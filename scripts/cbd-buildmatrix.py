@@ -23,11 +23,21 @@ DESCRIPTION
       microbial communities.
 
       The inputPath positional argument is the path to a file with the list of
-      paths to the input sequence files.  Each line of the list file is the
-      path to a sequence file.  Each sequence file contains the sequence reads
-      for a microbial community.  The --format optional argument specifies the
-      type of the sequence files.  Valid formats include 'fasta', 'fastq',
-      'clustal', 'embl', 'genbank', 'nexus, and 'seqxml'.
+      paths to the input sequence files and the groups each file belongs to.
+      Each line of the list file has two tab delimited fields: (1) path to a
+      sequence file, (2) list of groups the sequence file belongs to.  Each
+      sequence file contains the sequence reads for a microbial community.  The
+      list of groups is a semicolon delimited list of group names.  In the
+      following example, the sample1 fasta sequence file includes groups
+      patient1 and day7.
+
+          /myhome/sample1.fasta    patient1;day7
+
+      Note that the group list field is not used by cbd-buildmatrix.
+
+      The --format optional argument specifies the type of the sequence files.
+      Valid formats include 'fasta', 'fastq', 'clustal', 'embl', 'genbank',
+     'nexus, and 'seqxml'.
 
       The --scale optional argument specifies the scale of the distance values.
       A value of 'std' means to use the standard scale of 0 to 1.  A value of
@@ -49,6 +59,7 @@ EXAMPLES
 
 SEE ALSO
       cbd-getmatrix
+      cbd-filtermatrix
       kbws-checkjob
       kbws-jobs
 
@@ -96,9 +107,11 @@ if __name__ == "__main__":
     # Make sure all of the files in the list of files exist. 
     missingFiles = 0
     filelist = []
-    for filename in infile:
-        filename = filename.strip('\n\r')
-        if filename: # Skip empty lines
+    for line in infile:
+        line = line.strip('\n\r')
+        if line and line[0] != '#': # Skip empty lines
+            fields = line.split('\t')
+            filename = fields[0]
             if os.path.isfile(filename):
                 filelist.append(filename)
             else:
