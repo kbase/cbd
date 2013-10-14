@@ -23,6 +23,12 @@ NEW FEATURES:
 -Added cbd-filtermatix command script to filter matrix by groups.
 -Added group list field to file with list of input sequence files.
 
+UPDATED FEATURES / MAJOR BUG FIXES:
+-Fixed using cbd-url from an IRIS terminal.
+
+ANTICIPATED FUTURE DEVELOPMENTS:
+-Ability to generate figures and plots from distance matrix.
+
 VERSION: 1.0.0 (Released 09/04/2013)
 ------------------------------------------
 NEW FEATURES:
@@ -33,4 +39,4 @@ UPDATED FEATURES / MAJOR BUG FIXES:
 -None.
 
 ANTICIPATED FUTURE DEVELOPMENTS:
--Ability to generate figures and plots from distance matrix.
+-Ability to assign samples to a group and compare groups.
