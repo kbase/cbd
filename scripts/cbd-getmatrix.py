@@ -67,6 +67,8 @@ if __name__ == "__main__":
     # Check if the job had an error.
     if info['error']:
         print "Job '%s' ended with error '%s' and no results are available." %(args.jobID, info['status'])
+        print 'Error details:'
+        print ujsClient.get_detailed_error(args.jobID)
         ujsClient.delete_job(args.jobID)
         exit(1)
 

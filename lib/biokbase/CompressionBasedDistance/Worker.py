@@ -177,7 +177,7 @@ class CompressionBasedDistance:
         
         # Mark the job as complete.
         results = { 'shocknodes': [ node['id'] ], 'shockurl': self.config['shock_url'] }
-        ujsClient.complete_job(job['id'], self.ctx['token'], 'done', 0, results)
+        ujsClient.complete_job(job['id'], self.ctx['token'], 'done', '', results)
 
         # Cleanup after ourselves.
         self._cleanup(input, shockClient, jobDirectory, pool)

@@ -19,8 +19,9 @@ if __name__ == "__main__":
         worker.runJob(job)
     except Exception as e:
         # Mark the job as failed.
-        traceback.print_exc(file=sys.stderr)
+        tb = traceback.format_exc()
+        sys.stderr.write(tb)
         ujsClient = UserAndJobState(job['config']['userandjobstate_url'], token=job['context']['token'])
-        ujsClient.complete_job(job['id'], job['context']['token'], e.message, 1, results)
+        ujsClient.complete_job(job['id'], job['context']['token'], 'failed', tb, { })
     
     exit(0)
