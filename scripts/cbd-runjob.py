@@ -3,46 +3,24 @@
 import argparse
 import traceback
 import sys
-from biokbase.workspaceService.client import workspaceService
+import json
 from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance
+from biokbase.userandjobstate.client import UserAndJobState
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='RunJob')
-    parser.add_argument('jobID', help='identifier of job to run', action='store', default=None)
-    parser.add_argument('workspaceURL', help='url of workspace server', action='store', default=None)
-    parser.add_argument('token', help='authentication token for user', action='store', default=None)
+    parser = argparse.ArgumentParser(prog='cbd-runjob')
+    parser.add_argument('jobDataPath', help='path to job data file', action='store', default=None)
     args = parser.parse_args()
     
-    # Create a workspace client.
-    wsClient = workspaceService(args.workspaceURL)
-    
-    # Get information about the job.
-    jobList = wsClient.get_jobs( { 'jobids': [ args.jobID ], 'auth': args.token } )
-    if len(jobList) == 0:
-        print "Job '%s' does not exist!" %(args.jobID)
-        exit(1)
-    job = jobList[0]
-
-    # The job must be queued and a cbd type of job.
-    if job['status'] != 'queued':
-        print "Job '%s' must be in status 'queued' but has status '%s" %(args.jobID, job['status'])
-        exit(1)
-    if job['type'] != 'cbd':
-        print "Job '%s' must be of type 'cbd' but has type '%s'" %(args.jobID, job['type'])
-          
-    # Create a worker for running the job.
-    worker = CompressionBasedDistance()
-    
-    # Mark job as running and run the job.
+    # Run the job.
+    job = json.load(open(args.jobDataPath, 'r'))
     try:
-        wsClient.set_job_status( { 'jobid': job['id'], 'status': 'running', 'auth': args.token } )
-        output = worker.runJob(job)
-        job['jobdata']['output'] = output
-        status = 'done'
-    except:
-        status = 'error'
+        worker = CompressionBasedDistance()
+        worker.runJob(job)
+    except Exception as e:
+        # Mark the job as failed.
         traceback.print_exc(file=sys.stderr)
-    finally:
-        wsClient.set_job_status( { 'jobid': job['id'], 'status': status, 'auth': args.token, 'jobdata': job['jobdata']} )
+        ujsClient = UserAndJobState(job['config']['userandjobstate_url'], token=job['context']['token'])
+        ujsClient.complete_job(job['id'], job['context']['token'], e.message, 1, results)
     
     exit(0)

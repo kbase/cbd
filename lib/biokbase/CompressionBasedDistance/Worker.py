@@ -2,7 +2,8 @@ import os
 import numpy
 import shutil
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
-from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir
+from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir, timestamp
+from biokbase.userandjobstate.client import UserAndJobState
 from multiprocessing import Pool
 from itertools import combinations
 
@@ -87,13 +88,16 @@ class CompressionBasedDistance:
     
     def runJob(self, job):
         
-        self.config = job['jobdata']['config']
-        self.ctx = job['jobdata']['context']
-        input = job['jobdata']['input']
+        self.config = job['config']
+        self.ctx = job['context']
+        input = job['input']
         
         # Create a shock client and authenticate as the user.
         shockClient = ShockClient(self.config['shock_url'], self.ctx['token'])
         
+        # Create a user and job state client and authenticate as the user.
+        ujsClient = UserAndJobState(self.config['userandjobstate_url'], token=self.ctx['token'])
+
         # Create a process pool.
         pool = Pool(processes=int(self.config['num_pool_processes']))
         
@@ -101,6 +105,7 @@ class CompressionBasedDistance:
         jobDirectory = make_job_dir(self.config['work_folder_path'], job['id'])
 
         # Download input fasta files from Shock and extract sequences to work directory.
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'extracting sequence files', 1, timestamp(3600))
         resultList = []
         sequenceList = []
         for nodeId in input['node_ids']:
@@ -116,6 +121,7 @@ class CompressionBasedDistance:
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
             
         # Sort the sequences.
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'sorting sequence files', 1, timestamp(3600))
         resultList = []
         sortedList = []
         for sourceFile in sequenceList:
@@ -129,7 +135,8 @@ class CompressionBasedDistance:
                 self._cleanup(input, shockClient, jobDirectory, pool)
                 raise SortError("Error sorting sequence file, result: %d" %(result.get()))
              
-        # Create combined and sorted files.   
+        # Create combined and sorted files.
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'merging and sorting sequence files', 1, timestamp(3600))
         resultList = []
         for p,q in combinations(sortedList, 2):
             pbase = os.path.basename(p)
@@ -146,6 +153,7 @@ class CompressionBasedDistance:
                 raise MergeError("Error merging sequence files, result: %d" %(result.get()))
                    
         # Compress all sorted files.
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'compressing sequence files', 1, timestamp(3600))
         resultList = []
         compressedList = []
         for sourceFile in sortedList:
@@ -159,13 +167,19 @@ class CompressionBasedDistance:
                 raise CompressError("Error compressing sequence file, result: %d" %(result.get()))
         
         # Calculate the distance matrix.
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'calculating distance matrix', 1, timestamp(3600))
         csvFile = os.path.join(jobDirectory, 'output.csv')
         self._cbdCalculator(compressedList, input['scale'], csvFile)
         
         # Store the output file in shock
+        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'storing output file in shock', 1, timestamp(3600))
         node = shockClient.create_node(csvFile, '')
         
+        # Mark the job as complete.
+        results = { 'shocknodes': [ node['id'] ], 'shockurl': self.config['shock_url'] }
+        ujsClient.complete_job(job['id'], self.ctx['token'], 'done', 0, results)
+
         # Cleanup after ourselves.
         self._cleanup(input, shockClient, jobDirectory, pool)
         
-        return node['id']
+        return

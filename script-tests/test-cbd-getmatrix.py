@@ -38,7 +38,7 @@ class TestGetMatrixScript(unittest.TestCase):
     def test_missingOptionValue(self):
         '''Run cbd-getmatrix with a missing option value and verify that the error message is returned.'''
         
-        args = [ self.cmd, 'job', 'output', '--shock-url' ]
+        args = [ self.cmd, 'job', 'output', '--ujs-url' ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 2)
@@ -48,7 +48,7 @@ class TestGetMatrixScript(unittest.TestCase):
     def test_missingArg(self):
         '''Run cbd-getmatrix with a missing argument and verify that the error message is returned.'''
         
-        args = [ self.cmd, 'job', '--shock-url', 'http://localhost:7000' ]
+        args = [ self.cmd, 'job', '--ujs-url', 'http://localhost:7000' ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 2)

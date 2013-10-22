@@ -3,11 +3,9 @@ import sys
 import os
 import time
 import traceback
-#from shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
-from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
-from biokbase.CompressionBasedDistance.Helpers import get_url
-from biokbase.workspaceService.client import workspaceService
+from biokbase.CompressionBasedDistance.Helpers import job_info_dict
+from biokbase.userandjobstate.client import UserAndJobState, ServerError as JobStateServerError
 
 desc1 = '''
 NAME
@@ -30,8 +28,8 @@ DESCRIPTION
       0 means the two communities are identical and a value of 1 means the two
       communities are completely different.
 
-      The shock-url and workspace-url optional arguments specify alternate URLs
-      for the shock and workspace services.
+      The ujs-url optional argument specifies an alternate URL for the user and
+      job state service.
 '''
 
 desc3 = '''
@@ -41,8 +39,7 @@ EXAMPLES
 
 SEE ALSO
       cbd-buildmatrix
-      kbws-checkjob
-      kbws-jobs
+      cbd-filtermatrix
 
 AUTHORS
       Mike Mundy 
@@ -53,41 +50,40 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
     parser.add_argument('jobID', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('outputPath', help='path to output csv file', action='store', default=None)
-    parser.add_argument('-?', '--usage', help='show usage information', action='store_true', dest='usage')
-    parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockURL', default='http://kbase.us/services/shock-api/')
-    parser.add_argument('--workspace-url', help='url for workspace service', action='store', dest='workspaceURL', default='http://kbase.us/services/workspace/')
+    parser.add_argument('--ujs-url', help='url for user and job state service', action='store', dest='ujsURL', default='http://140.221.85.151:7083')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
     
-    if args.usage:
-        print usage
-        exit(0)
-
-    # Create a cbd client (until workspace supports authenticated clients).
-    cbdClient = CompressionBasedDistance(url=get_url())
-    
-    # Check on the specified job.
-    wsClient = workspaceService(args.workspaceURL)
-    jobList = wsClient.get_jobs( { 'jobids': [ args.jobID ], 'auth': cbdClient._headers['AUTHORIZATION'] } )
-    if len(jobList) == 0:
-        print "Job '%s' does not exist!" %(args.jobID)
+    # Get the status of the specified job.
+    ujsClient = UserAndJobState(args.ujsURL)
+    try:
+        info = job_info_dict(ujsClient.get_job_info(args.jobID))
+    except JobStateServerError as e:
+        print e.message
         exit(1)
 
-    job = jobList[0]
-    if job['status'] != 'done':
-        print "Job '%s' has status '%s' and is not finished.  Check again later." %(args.jobID, job['status'])
+    # Check if the job had an error.
+    if info['error']:
+        print "Job '%s' ended with error '%s' and no results are available." %(args.jobID, info['status'])
+        ujsClient.delete_job(args.jobID)
         exit(1)
-        
+
+    # Check if the job is complete.
+    if not info['complete']:
+        print "Job '%s' has status '%s' and is working on task %s of %s.  Check again later." \
+            %(args.jobID, info['status'], info['total_progress'], info['max_progress'])
+        exit(1)
+
     # Create a shock client.
-    shockClient = ShockClient(args.shockURL, cbdClient._headers['AUTHORIZATION'])
+    shockClient = ShockClient(info['results']['shockurl'], ujsClient._headers['AUTHORIZATION'])
        
     # Download the output to the specified file and remove the file from shock.
-    shockClient.download_to_path(job['jobdata']['output'], args.outputPath)
-    shockClient.delete(job['jobdata']['output'])
+    shockClient.download_to_path(info['results']['shocknodes'][0], args.outputPath)
+    shockClient.delete(info['results']['shocknodes'][0])
     
     # Delete the job.
-    wsClient.set_job_status( { 'jobid': job['id'], 'status': 'delete', 'currentStatus': 'done', 'auth': cbdClient._headers['AUTHORIZATION']} )
+    ujsClient.delete_job(args.jobID)
     
     exit(0)
