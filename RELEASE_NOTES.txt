@@ -17,10 +17,22 @@ the communities are completely different.
 Compression-based distance (CBD): a simple, rapid, and accurate method for
 microbiota composition comparison. BMC Bioinformatics 2013, 14:136.
 
+VERSION: 1.2.0 (Released 11/18/2013)
+------------------------------------------
+NEW FEATURES:
+-Added cbd-plotmatrix command script to generate figures and plots from a
+ distance matrix.
+
+UPDATED FEATURES / MAJOR BUG FIXES:
+-Switched to user and job state service for job management.
+
+ANTICIPATED FUTURE DEVELOPMENTS:
+-Add more output options for cbd-plotmatrix.
+
 VERSION: 1.1.0 (Released 10/28/2013)
 ------------------------------------------
 NEW FEATURES:
--Added cbd-filtermatix command script to filter matrix by groups.
+-Added cbd-filtermatrix command script to filter matrix by groups.
 -Added group list field to file with list of input sequence files.
 
 UPDATED FEATURES / MAJOR BUG FIXES:

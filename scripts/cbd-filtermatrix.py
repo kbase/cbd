@@ -80,17 +80,12 @@ if __name__ == "__main__":
     parser.add_argument('sourcePath', help='path to source distance matrix file', action='store', default=None)
     parser.add_argument('destPath', help='path to destination distance matrix file', action='store', default=None)
     parser.add_argument('group', help='list of group identifiers (separated by semicolon)', action='store', default=None)
-    parser.add_argument('-?', '--usage', help='show usage information', action='store_true', dest='usage')
     parser.add_argument('-f', '--filter', help='type of filter (within, without, or between)', action='store', dest='filter', default='within')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
     
-    if args.usage:
-        print usage
-        exit(0)
-
     # Parse the list of group identifiers.
     groupList = args.group.split(';')
     

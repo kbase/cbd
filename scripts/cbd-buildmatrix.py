@@ -44,9 +44,9 @@ DESCRIPTION
       'inf' means to use a scale from 0 to infinity.
 
       A job is started to build the distance matrix and the job id is returned.
-      Use the kbws-checkjob command to monitor the status of the job.  When the
-      job is done, run the cbd-getmatrix command to save the distance matrix
-      to a file.
+      Use the cbd-getmatrix command to monitor the status of the job.  When the
+      job is done, the cbd-getmatrix command saves the distance matrix to a
+      file.
 '''
 
 desc3 = '''
@@ -60,8 +60,6 @@ EXAMPLES
 SEE ALSO
       cbd-getmatrix
       cbd-filtermatrix
-      kbws-checkjob
-      kbws-jobs
 
 AUTHORS
       Mike Mundy, Fang Yang, Nicholas Chia, Patricio Jeraldo 
@@ -71,7 +69,6 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
-    parser.add_argument('-?', '--usage', help='show usage information', action='store_true', dest='usage')
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default='fasta')
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
     parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://localhost:7102')
@@ -81,10 +78,6 @@ if __name__ == "__main__":
     parser.usage = argparse.SUPPRESS
     args = parser.parse_args()
     
-    if args.usage:
-        print usage
-        exit(0)
-
     # Create input parameters for build_matrix() function.
     input = { }
     input['format'] = args.format
