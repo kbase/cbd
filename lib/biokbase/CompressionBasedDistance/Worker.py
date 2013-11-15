@@ -105,7 +105,10 @@ class CompressionBasedDistance:
         jobDirectory = make_job_dir(self.config['work_folder_path'], job['id'])
 
         # Download input fasta files from Shock and extract sequences to work directory.
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'extracting sequence files', 1, timestamp(3600))
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'extracting sequence files', 1, timestamp(3600))
+        except:
+            pass
         resultList = []
         sequenceList = []
         for nodeId in input['node_ids']:
@@ -121,7 +124,10 @@ class CompressionBasedDistance:
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
             
         # Sort the sequences.
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'sorting sequence files', 1, timestamp(3600))
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'sorting sequence files', 1, timestamp(3600))
+        except:
+            pass
         resultList = []
         sortedList = []
         for sourceFile in sequenceList:
@@ -136,7 +142,10 @@ class CompressionBasedDistance:
                 raise SortError("Error sorting sequence file, result: %d" %(result.get()))
              
         # Create combined and sorted files.
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'merging and sorting sequence files', 1, timestamp(3600))
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'merging and sorting sequence files', 1, timestamp(3600))
+        except:
+            pass
         resultList = []
         for p,q in combinations(sortedList, 2):
             pbase = os.path.basename(p)
@@ -153,7 +162,10 @@ class CompressionBasedDistance:
                 raise MergeError("Error merging sequence files, result: %d" %(result.get()))
                    
         # Compress all sorted files.
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'compressing sequence files', 1, timestamp(3600))
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'compressing sequence files', 1, timestamp(3600))
+        except:
+            pass
         resultList = []
         compressedList = []
         for sourceFile in sortedList:
@@ -167,12 +179,18 @@ class CompressionBasedDistance:
                 raise CompressError("Error compressing sequence file, result: %d" %(result.get()))
         
         # Calculate the distance matrix.
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'calculating distance matrix', 1, timestamp(3600))
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'calculating distance matrix', 1, timestamp(3600))
+        except:
+            pass
         csvFile = os.path.join(jobDirectory, 'output.csv')
         self._cbdCalculator(compressedList, input['scale'], csvFile)
         
-        # Store the output file in shock
-        ujsClient.update_job_progress(job['id'], self.ctx['token'], 'storing output file in shock', 1, timestamp(3600))
+        # Store the output file in shock.
+        try:
+            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'storing output file in shock', 1, timestamp(3600))
+        except:
+            pass
         node = shockClient.create_node(csvFile, '')
         
         # Mark the job as complete.
