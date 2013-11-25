@@ -5,13 +5,14 @@ from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.CompressionBasedDistance.Helpers import make_job_dir, timestamp
 #END_HEADER
 
-'''
 
-Module Name:
-CompressionBasedDistance
+class CompressionBasedDistance:
+    '''
+    Module Name:
+    CompressionBasedDistance
 
-Module Description:
-Compression Based Distance (CBD) service
+    Module Description:
+    Compression Based Distance (CBD) service
 
 Compression-based distance (CBD) is a simple, rapid, and accurate method to
 efficiently assess differences in microbiota samples.  CBD characterizes
@@ -25,16 +26,21 @@ by taking compression gained by combining the datasets over the total
 compressed size of the individual datasets.  The distance has a value with a
 minimum of 0 meaning the communities are the same and a maximum of 1 meaning
 the communities are completely different.
+    '''
 
-'''
-class CompressionBasedDistance:
-
+    ######## WARNING FOR GEVENT USERS #######
+    # Since asynchronous IO can lead to methods - even the same method -
+    # interrupting each other, you must be *very* careful when using global
+    # state. A method could easily clobber the state set by another while
+    # the latter method is running.
+    #########################################
     #BEGIN_CLASS_HEADER
  
     #END_CLASS_HEADER
 
-    def __init__(self, config): #config contains contents of config file in hash or 
-                                #None if it couldn't be found
+    # config contains contents of config file in a hash or None if it couldn't
+    # be found
+    def __init__(self, config):
         #BEGIN_CONSTRUCTOR
         
         if config == None:
@@ -96,7 +102,7 @@ class CompressionBasedDistance:
 
         #At some point might do deeper type checking...
         if not isinstance(job_id, basestring):
-            raise ValueError('Method build_matrix return value job_id is not type basestring as required.')
+            raise ValueError('Method build_matrix return value ' +
+                             'job_id is not type basestring as required.')
         # return the results
-        return [ job_id ]
-        
+        return [job_id]
