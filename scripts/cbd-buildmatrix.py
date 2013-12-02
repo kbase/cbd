@@ -126,9 +126,8 @@ if __name__ == "__main__":
         jobid = cbdClient.build_matrix(input)
     except:
         # Delete all of the input files from shock if something went wrong.
-        # Turn back on when JIRA-33X is fixed
-#        for nodeId in input['node_ids']:
-#            shockClient.delete(nodeId)
+        for nodeId in input['node_ids']:
+            shockClient.delete(nodeId)
         traceback.print_exc(file=sys.stderr)
         exit(1)
 
