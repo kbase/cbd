@@ -3,14 +3,14 @@ import sys
 import os
 import time
 import traceback
-#from shock import Client as ShockClient
-from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
-from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
-from biokbase.CompressionBasedDistance.Helpers import get_url
+from biokbase.CompressionBasedDistance.Client import _read_inifile
+from biokbase.CompressionBasedDistance.Helpers import get_config
+from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance
 
 desc1 = '''
 NAME
-      cbd-buildmatrix -- build a distance matrix to compare microbiota samples
+      cbd-buildmatrixlocal -- build a distance matrix to compare microbiota samples
+                              on local system
 
 SYNOPSIS      
 '''
@@ -20,7 +20,8 @@ DESCRIPTION
       Build a distance matrix from a set of sequence files for microbiota
       comparisons.  Compression based distance uses the relative compression
       of combined and individual datasets to quantify overlaps between
-      microbial communities.
+      microbial communities.  The job started to build the distance matrix is
+      run on the local system.
 
       The inputPath positional argument is the path to a file with the list of
       paths to the input sequence files and the groups each file belongs to.
@@ -58,6 +59,7 @@ EXAMPLES
       > cbd-buildmatrix --format fastq mystudy.input
 
 SEE ALSO
+      cbd-buildmatrix
       cbd-getmatrix
       cbd-filtermatrix
 
@@ -71,8 +73,6 @@ if __name__ == "__main__":
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default='fasta')
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
-#    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://www.kbase.us/services/cbd/')
-    parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://www.kbase.us/services/shock-api/')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
@@ -86,10 +86,7 @@ if __name__ == "__main__":
     input['file_paths'] = list()
 
     # Create a cbd client (which must be authenticated).
-    cbdClient = CompressionBasedDistance(url=get_url())
-    
-    # Create a shock client.
-    shockClient = ShockClient(args.shockurl, cbdClient._headers['AUTHORIZATION'])
+    auth = _read_inifile()
     
     # Open the input file with the list of files.
     try:
@@ -118,17 +115,13 @@ if __name__ == "__main__":
         
     # For each file, upload to shock (keep track of ids).
     for filename in filelist:
-        print "Uploading sequence file '%s'" %(filename)
-        node = shockClient.create_node(filename, '')
-        input['node_ids'].append(node['id'])
+        input['file_paths'].append(filename)
         
     # Submit a job to build the distance matrix.
     try:
-        jobid = cbdClient.build_matrix(input)
+        worker = CompressionBasedDistance()
+        jobid = worker.startJob(get_config(None), auth, input)
     except:
-        # Delete all of the input files from shock if something went wrong.
-        for nodeId in input['node_ids']:
-            shockClient.delete(nodeId)
         traceback.print_exc(file=sys.stderr)
         exit(1)
 

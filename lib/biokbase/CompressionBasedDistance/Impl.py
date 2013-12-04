@@ -1,7 +1,7 @@
 #BEGIN_HEADER
 import os
-import json
 from biokbase.userandjobstate.client import UserAndJobState
+from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance as Worker
 from biokbase.CompressionBasedDistance.Helpers import make_job_dir, timestamp
 #END_HEADER
 
@@ -49,18 +49,6 @@ the communities are completely different.
         else:
             self.config = config
             
-        # Convert flag to boolean value (a number greater than zero or the string 'True' turns the flag on).
-        if self.config['debug'].isdigit():
-            if int(self.config['debug']) > 0:
-                self.config['debug'] = True
-            else:
-                self.config['debug'] = False
-        else:
-            if self.config['debug'] == 'True':
-                self.config['debug'] = True
-            else:
-                self.config['debug'] = False
-
         # Create the work folder if it does not exist.
         if not os.path.exists(self.config['work_folder_path']):
             os.makedirs(self.config['work_folder_path'], 0775)
@@ -73,31 +61,9 @@ the communities are completely different.
         # return variables are: job_id
         #BEGIN build_matrix
         
-        # Create a user and job state client and authenticate as the user.
-        ujsClient = UserAndJobState(self.config['userandjobstate_url'], token=self.ctx['token'])
+        worker = Worker()
+        job_id = worker.startJob(self.config, self.ctx, input)
         
-        # Create a job to track building the distance matrix.
-        status = 'initializing'
-        description = 'cbd-buildmatrix with %d files for user ' %(len(input['node_ids']))
-        progress = { 'ptype': 'task', 'max': 6 }
-        job_id = ujsClient.create_and_start_job(self.ctx['token'], status, description, progress, timestamp(3600))
-
-        # Create working directory for job and build file names.
-        jobDirectory = make_job_dir(self.config['work_folder_path'], job_id)
-        jobDataFilename = os.path.join(jobDirectory, 'jobdata.json')
-        outputFilename = os.path.join(jobDirectory, 'stdout.log')
-        errorFilename = os.path.join(jobDirectory, 'stderr.log')
-        
-        # Save data required for running the job.
-        # Another option is to create a key of the jobid and store state.
-        jobData = { 'id': job_id, 'input': input, 'context': self.ctx, 'config': self.config }
-        json.dump(jobData, open(jobDataFilename, "w"), indent=4)
-
-        # Start worker to run the job.
-        jobScript = os.path.join(os.environ['KB_TOP'], 'bin/cbd-runjob')
-        cmdline = "nohup %s %s >%s 2>%s &" %(jobScript, jobDataFilename, outputFilename, errorFilename)
-        status = os.system(cmdline)
-
         #END build_matrix
 
         #At some point might do deeper type checking...

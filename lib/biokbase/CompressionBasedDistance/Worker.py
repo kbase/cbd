@@ -1,6 +1,7 @@
 import os
 import numpy
 import shutil
+import json
 from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir, timestamp
 from biokbase.userandjobstate.client import UserAndJobState
@@ -75,10 +76,7 @@ class CompressionBasedDistance:
             shockClient.delete(nodeId)
             
         # Remove the work directory.
-        if self.config['debug'] == '0': 
-            shutil.rmtree(jobDirectory)
-        else:
-            print "skipped rmtree"
+        shutil.rmtree(jobDirectory)
             
         # Stop the process pool.
         pool.close()
@@ -86,27 +84,54 @@ class CompressionBasedDistance:
         
         return
     
+    def startJob(self, config, context, input):
+        # Create a user and job state client and authenticate as the user.
+        ujsClient = UserAndJobState(config['userandjobstate_url'], token=context['token'])
+
+        # Create a job to track building the distance matrix.
+        status = 'initializing'
+        description = 'cbd-buildmatrix with %d files for user %s' %(len(input['node_ids'])+len(input['file_paths']), context['user_id'])
+        progress = { 'ptype': 'task', 'max': 6 }
+        job_id = ujsClient.create_and_start_job(context['token'], status, description, progress, timestamp(3600))
+
+        # Create working directory for job and build file names.
+        jobDirectory = make_job_dir(config['work_folder_path'], job_id)
+        jobDataFilename = os.path.join(jobDirectory, 'jobdata.json')
+        outputFilename = os.path.join(jobDirectory, 'stdout.log')
+        errorFilename = os.path.join(jobDirectory, 'stderr.log')
+
+        # Save data required for running the job.
+        # Another option is to create a key of the jobid and store state.
+        jobData = { 'id': job_id, 'input': input, 'context': context, 'config': config }
+        json.dump(jobData, open(jobDataFilename, "w"), indent=4)
+
+        # Start worker to run the job.
+        jobScript = os.path.join(os.environ['KB_TOP'], 'bin/cbd-runjob')
+        cmdline = "nohup %s %s >%s 2>%s &" %(jobScript, jobDataFilename, outputFilename, errorFilename)
+        status = os.system(cmdline)
+        return job_id
+
     def runJob(self, job):
         
-        self.config = job['config']
-        self.ctx = job['context']
+        config = job['config']
+        context = job['context']
         input = job['input']
         
         # Create a shock client and authenticate as the user.
-        shockClient = ShockClient(self.config['shock_url'], self.ctx['token'])
+        shockClient = ShockClient(config['shock_url'], context['token'])
         
         # Create a user and job state client and authenticate as the user.
-        ujsClient = UserAndJobState(self.config['userandjobstate_url'], token=self.ctx['token'])
+        ujsClient = UserAndJobState(config['userandjobstate_url'], token=context['token'])
 
         # Create a process pool.
-        pool = Pool(processes=int(self.config['num_pool_processes']))
+        pool = Pool(processes=int(config['num_pool_processes']))
         
         # Create a work directory for storing intermediate files.
-        jobDirectory = make_job_dir(self.config['work_folder_path'], job['id'])
+        jobDirectory = make_job_dir(config['work_folder_path'], job['id'])
 
         # Download input fasta files from Shock and extract sequences to work directory.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'extracting sequence files', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'extracting sequence files', 1, timestamp(3600))
         except:
             pass
         resultList = []
@@ -116,16 +141,25 @@ class CompressionBasedDistance:
             sourceFile = os.path.join(jobDirectory, node['file']['name'])
             destFile = '%s.sequence' %(os.path.splitext(sourceFile)[0])
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, self.config['shock_url'], self.ctx['token'],))
+            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, config['shock_url'], context['token'],))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
-            
+        for path in input['file_paths']:
+            sourceFile = os.path.basename(path)
+            destFile = '%s/%s.sequence' %(jobDirectory, os.path.splitext(sourceFile)[0])
+            sequenceList.append(destFile)
+            result = pool.apply_async(extract_seq, (None, path, input['format'], destFile, config['shock_url'], context['token'],))
+            resultList.append(result)
+        for result in resultList:
+            if result.get() != 0:
+                self._cleanup(input, shockClient, jobDirectory, pool)
+                raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
         # Sort the sequences.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'sorting sequence files', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'sorting sequence files', 1, timestamp(3600))
         except:
             pass
         resultList = []
@@ -143,7 +177,7 @@ class CompressionBasedDistance:
              
         # Create combined and sorted files.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'merging and sorting sequence files', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'merging and sorting sequence files', 1, timestamp(3600))
         except:
             pass
         resultList = []
@@ -163,7 +197,7 @@ class CompressionBasedDistance:
                    
         # Compress all sorted files.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'compressing sequence files', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'compressing sequence files', 1, timestamp(3600))
         except:
             pass
         resultList = []
@@ -180,7 +214,7 @@ class CompressionBasedDistance:
         
         # Calculate the distance matrix.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'calculating distance matrix', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'calculating distance matrix', 1, timestamp(3600))
         except:
             pass
         csvFile = os.path.join(jobDirectory, 'output.csv')
@@ -188,14 +222,14 @@ class CompressionBasedDistance:
         
         # Store the output file in shock.
         try:
-            ujsClient.update_job_progress(job['id'], self.ctx['token'], 'storing output file in shock', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'storing output file in shock', 1, timestamp(3600))
         except:
             pass
         node = shockClient.create_node(csvFile, '')
         
         # Mark the job as complete.
-        results = { 'shocknodes': [ node['id'] ], 'shockurl': self.config['shock_url'] }
-        ujsClient.complete_job(job['id'], self.ctx['token'], 'done', None, results)
+        results = { 'shocknodes': [ node['id'] ], 'shockurl': config['shock_url'] }
+        ujsClient.complete_job(job['id'], context['token'], 'done', None, results)
 
         # Cleanup after ourselves.
         self._cleanup(input, shockClient, jobDirectory, pool)

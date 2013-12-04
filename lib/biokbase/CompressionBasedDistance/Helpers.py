@@ -8,6 +8,10 @@ from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
 from ConfigParser import ConfigParser
 from Bio import SeqIO
 
+# Exception thrown when a command failed
+class CommandError(Exception):
+    pass
+
 DefaultURL = 'http://www.kbase.us/services/cbd/'
 
 def get_url():
@@ -39,7 +43,7 @@ def set_url(newURL):
 def get_config(filename):
     # Use default config file if one is not specified.
     if filename == None:
-        filename = os.path.join(sys.environ['KB_TOP'], 'deployment.cfg')
+        filename = os.path.join(os.environ['KB_TOP'], 'deployment.cfg')
         
     # Read the config file and extract the probabilistic annotation section.
     retconfig = {}
@@ -57,8 +61,9 @@ def make_job_dir(workDirectory, jobID):
 
 def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
     # Download the file from Shock to the working directory.
-    shockClient = ShockClient(shockUrl, auth)
-    shockClient.download_to_path(nodeId, sourceFile)
+    if nodeId is not None:
+        shockClient = ShockClient(shockUrl, auth)
+        shockClient.download_to_path(nodeId, sourceFile)
 
     # Extract the sequences from the source file.
     with open(destFile, 'w') as f:
@@ -66,22 +71,21 @@ def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
             f.write(str(seqRecord.seq) + '\n')
     return 0
 
+''' Run a command in a new process. '''
+
 def run_command(args):
     try:
         retcode = subprocess.call(args)
         if retcode < 0:
             cmd = ' '.join(args)
-#            raise MakeblastdbError("'%s' was terminated by signal %d" %(cmd, -retcode))
-            return 1
+            raise CommandError("'%s' was terminated by signal %d" %(cmd, -retcode))
         else:
             if retcode > 0:
                 cmd = ' '.join(args)
-#                raise MakeblastdbError("'%s' failed with status %d" %(cmd, retcode))
-                return 1
+                raise CommandError("'%s' failed with status %d" %(cmd, retcode))
     except OSError as e:
         cmd = ' '.join(args)
-#        raise MakeblastdbError("Failed to run '%s': %s" %(cmd, e.strerror))
-        return 1
+        raise CommandError("Failed to run '%s': %s" %(cmd, e.strerror))
     return 0
 
 ''' Get a timestamp in the format required by user and job state service.
