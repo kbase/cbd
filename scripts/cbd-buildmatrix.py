@@ -83,7 +83,6 @@ if __name__ == "__main__":
     input['format'] = args.format
     input['scale'] = args.scale
     input['node_ids'] = list()
-    input['file_paths'] = list()
 
     # Create a cbd client (which must be authenticated).
     cbdClient = CompressionBasedDistance(url=get_url())

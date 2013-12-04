@@ -61,6 +61,8 @@ the communities are completely different.
         # return variables are: job_id
         #BEGIN build_matrix
         
+        if 'file_paths' not in input:
+            input['file_paths'] = list()
         worker = Worker()
         job_id = worker.startJob(self.config, self.ctx, input)
         
