@@ -8,6 +8,9 @@ from biokbase.userandjobstate.client import UserAndJobState
 from multiprocessing import Pool
 from itertools import combinations
 
+# String used to separate components in paired file names.
+PairSeparator = '-cbdpair-'
+
 # Exception thrown when extract sequences failed
 class ExtractError(Exception):
     pass
@@ -28,35 +31,35 @@ class CompressionBasedDistance:
     
     def _cbdCalculator(self, fileList, scale, outputFile):
         # Parse the files.
-        single_sizes= dict()
-        pair_sizes= dict()
+        single_sizes = dict()
+        pair_sizes = dict()
         
         for sourceFile in fileList:
             # Should strip prefix too
             fbase = os.path.basename(sourceFile)
             fname = fbase.strip('.sorted.xz')
-            if '.' in fname:
+            if PairSeparator in fname:
                 pair_sizes[fname] = os.path.getsize(sourceFile)
             else:
                 single_sizes[fname] = os.path.getsize(sourceFile)
                 
         # Map file names to indices.
-        fnames= single_sizes.keys()
+        fnames = single_sizes.keys()
         fnames.sort()
-        indices= dict()
+        indices = dict()
         
         for name,i in zip(fnames, range(len(fnames))):
-            indices[name]= i
+            indices[name] = i
         
         # Compute the distance scores.
-        pair_names= pair_sizes.keys()
-        cbd_array= numpy.zeros((len(fnames),len(fnames)), dtype=float)
+        pair_names = pair_sizes.keys()
+        cbd_array = numpy.zeros((len(fnames), len(fnames)), dtype=float)
         for pair in pair_names:
-            name1, name2= pair.split('.')
+            name1, name2 = pair.split(PairSeparator)
             c1 = single_sizes[name1]
             c2 = single_sizes[name2]
             c12 = pair_sizes[pair]
-            distance= 1.0 - 2.0*(c1 + c2 - c12)/(c1 + c2)
+            distance = 1.0 - 2.0*(c1 + c2 - c12)/(c1 + c2)
             if scale == 'inf':
                 distance = distance/(1.0 - distance)
             cbd_array[indices[name1],indices[name2]] = distance
@@ -157,6 +160,13 @@ class CompressionBasedDistance:
             if result.get() != 0:
                 self._cleanup(input, shockClient, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
+
+        # Check for the pair separator string in the file names and replace as needed.
+        for index in range(len(sequenceList)):
+            sourceFile = sequenceList[index]
+            if PairSeparator in sourceFile:
+                sequenceList[index] = sourceFile.replace(PairSeparator, '-')
+
         # Sort the sequences.
         try:
             ujsClient.update_job_progress(job['id'], context['token'], 'sorting sequence files', 1, timestamp(3600))
@@ -177,14 +187,14 @@ class CompressionBasedDistance:
              
         # Create combined and sorted files.
         try:
-            ujsClient.update_job_progress(job['id'], context['token'], 'merging and sorting sequence files', 1, timestamp(3600))
+            ujsClient.update_job_progress(job['id'], context['token'], 'merging all pairs of sequence files', 1, timestamp(3600))
         except:
             pass
         resultList = []
         for p,q in combinations(sortedList, 2):
             pbase = os.path.basename(p)
             qbase = os.path.basename(q)
-            dbase = '%s.%s.sorted' %(os.path.splitext(pbase)[0], os.path.splitext(qbase)[0])
+            dbase = '%s%s%s.sorted' %(os.path.splitext(pbase)[0], PairSeparator, os.path.splitext(qbase)[0])
             destFile = os.path.join(jobDirectory, dbase)
             sortedList.append(destFile)
             args = [ '/usr/bin/sort', '-m', '--output=%s' %(destFile), p, q ]
