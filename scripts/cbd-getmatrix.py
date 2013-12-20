@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
     parser.add_argument('jobID', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('outputPath', help='path to output csv file', action='store', default=None)
-    parser.add_argument('--ujs-url', help='url for user and job state service', action='store', dest='ujsURL', default='https://www.kbase.us/services/userandjobstate')
+    parser.add_argument('--ujs-url', help='url for user and job state service', action='store', dest='ujsURL', default='https://kbase.us/services/userandjobstate')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS

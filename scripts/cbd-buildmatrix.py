@@ -71,8 +71,8 @@ if __name__ == "__main__":
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default='fasta')
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
-#    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://www.kbase.us/services/cbd/')
-    parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://www.kbase.us/services/shock-api/')
+#    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
+    parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://kbase.us/services/shock-api/')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS

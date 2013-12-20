@@ -227,7 +227,7 @@ class CompressionBasedDistance:
             ujsClient.update_job_progress(job['id'], context['token'], 'calculating distance matrix', 1, timestamp(3600))
         except:
             pass
-        csvFile = os.path.join(jobDirectory, 'output.csv')
+        csvFile = os.path.join(jobDirectory, '%s.csv' %(job['id']))
         self._cbdCalculator(compressedList, input['scale'], csvFile)
         
         # Store the output file in shock.

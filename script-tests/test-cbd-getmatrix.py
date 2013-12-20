@@ -48,7 +48,7 @@ class TestGetMatrixScript(unittest.TestCase):
     def test_missingArg(self):
         '''Run cbd-getmatrix with a missing argument and verify that the error message is returned.'''
         
-        args = [ self.cmd, 'job', '--ujs-url', 'http://www.kbase.us/services/userandjobstate/' ]
+        args = [ self.cmd, 'job', '--ujs-url', 'https://kbase.us/services/userandjobstate/' ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 2)

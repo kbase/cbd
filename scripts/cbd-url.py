@@ -21,7 +21,7 @@ desc3 = '''
 EXAMPLES
       Display the current URL:
       > cbd-url
-      Current URL: http://www.kbase.us/services/cbd/
+      Current URL: http://kbase.us/services/cbd/
 
       Use a new URL:
       > cbd-url http://localhost:7102
@@ -29,7 +29,7 @@ EXAMPLES
 
       Reset to the default URL:
       > cbd-url default
-      New URL set to: http://www.kbase.us/services/cbd/
+      New URL set to: http://kbase.us/services/cbd/
 
 AUTHORS
       Mike Mundy

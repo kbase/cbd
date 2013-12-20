@@ -12,7 +12,7 @@ from Bio import SeqIO
 class CommandError(Exception):
     pass
 
-DefaultURL = 'http://www.kbase.us/services/cbd/'
+DefaultURL = 'http://kbase.us/services/cbd/'
 
 def get_url():
     if 'KB_RUNNING_IN_IRIS' not in os.environ:

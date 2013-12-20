@@ -41,7 +41,7 @@ class TestUrlScript(unittest.TestCase):
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 0)
-        self.assertNotEqual(so.find("http://www.kbase.us/services/cbd/"), -1)
+        self.assertNotEqual(so.find("http://kbase.us/services/cbd/"), -1)
         self.assertEqual(se, '')
         
     def test_seturl(self):
