@@ -37,12 +37,13 @@ class CompressionBasedDistance:
         for sourceFile in fileList:
             # Should strip prefix too
             fbase = os.path.basename(sourceFile)
-            fname = fbase.strip('.sorted.xz')
+            # This works as long as '.sorted.xz' only occurs at the end of the path.
+            fname = fbase.replace('.sorted.xz', '')
             if PairSeparator in fname:
                 pair_sizes[fname] = os.path.getsize(sourceFile)
             else:
                 single_sizes[fname] = os.path.getsize(sourceFile)
-                
+
         # Map file names to indices.
         fnames = single_sizes.keys()
         fnames.sort()
@@ -244,4 +245,17 @@ class CompressionBasedDistance:
         # Cleanup after ourselves.
         self._cleanup(input, shockClient, jobDirectory, pool)
         
+        return
+
+    def calculate(self, listFilePath, scale, csvFile):
+
+        # Each line of the list file is a path to a compressed file.
+        compressedList = list()
+        listFile = open(listFilePath, 'r')
+        for line in listFile:
+            compressedList.append(line.strip())
+        listFile.close()
+
+        # Calculate the distance matrix.
+        self._cbdCalculator(compressedList, scale, csvFile)
         return
