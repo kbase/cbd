@@ -32,7 +32,7 @@ compile-typespec:
 
 # Test
 
-test: test-client test-scripts
+test: test-scripts
 	@echo "running server, script and client tests"
 
 test-scripts:
