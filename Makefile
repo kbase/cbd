@@ -64,21 +64,6 @@ deploy: deploy-client deploy-service
 
 deploy-client: deploy-libs deploy-scripts deploy-docs
 
-# Deploy command line scripts.  The scripts are "wrapped" so users do not
-# need to modify their environment to run KBase scripts.
-	
-deploy-scripts:
-	export KB_TOP=$(TARGET); \
-	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
-	export KB_PYTHON_PATH=$(TARGET)/lib bash ; \
-	for src in $(SRC_PYTHON) ; do \
-		basefile=`basename $$src`; \
-		base=`basename $$src .py`; \
-		echo install $$src $$base ; \
-		cp $$src $(TARGET)/pybin ; \
-		$(WRAP_PYTHON_SCRIPT) "$(TARGET)/pybin/$$basefile" $(TARGET)/bin/$$base ; \
-	done
-
 # Deploy documentation of the application programming interface.
 # (Waiting for resolution on documentation of command line scripts).
 	
