@@ -116,3 +116,35 @@ def job_info_dict(infoTuple):
     info['description'] = infoTuple[12]
     info['results'] = infoTuple[13]
     return info
+
+''' Parse the input file for building a matrix. '''
+
+def parse_input_file(inputPath):
+    # Open the input file with the list of files.
+    try:
+        infile = open(inputPath, "r")
+    except IOError as e:
+        print "Error opening input list file '%s': %s" %(inputPath, e.strerror)
+        return None, None, 1
+
+    # Make sure all of the files in the list of files exist.
+    numMissingFiles = 0
+    fileList = list()
+    extensions = dict()
+    for line in infile:
+        line = line.strip('\n\r')
+        if line and line[0] != '#': # Skip empty lines
+            fields = line.split('\t')
+            filename = fields[0]
+            if os.path.isfile(filename):
+                fileList.append(filename)
+                ext = os.path.splitext(filename)[1].split('.')[-1]
+                extensions[ext] = 1
+            else:
+                print "'%s' does not exist" %(filename)
+                numMissingFiles += 1
+    infile.close()
+    if numMissingFiles > 0:
+        print "%d files are not accessible. Update %s with correct file names" %(numMissingFiles, inputPath)
+
+    return fileList, extensions, numMissingFiles

@@ -5,7 +5,7 @@ import time
 import traceback
 from shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
-from biokbase.CompressionBasedDistance.Helpers import get_url
+from biokbase.CompressionBasedDistance.Helpers import get_url, parse_input_file
 
 desc1 = '''
 NAME
@@ -36,11 +36,15 @@ DESCRIPTION
 
       The --format optional argument specifies the type of the sequence files.
       Valid formats include 'fasta', 'fastq', 'clustal', 'embl', 'genbank',
-     'nexus, and 'seqxml'.
+      'nexus, and 'seqxml'.  All of the sequence files must be in the same
+      format.  If the --format argument is not specified, the format is set
+      from the extension of the sequence files.
 
       The --scale optional argument specifies the scale of the distance values.
-      A value of 'std' means to use the standard scale of 0 to 1.  A value of
-      'inf' means to use a scale from 0 to infinity.
+      A value of 'std' means to use the standard scale of 0 to 1, where 0 means
+      the two communities are identical and a value of 1 means the two
+      communities are completely different.  A value of 'inf' means to use a
+      scale from 0 to infinity.
 
       A job is started to build the distance matrix and the job id is returned.
       Use the cbd-getmatrix command to monitor the status of the job.  When the
@@ -50,15 +54,17 @@ DESCRIPTION
 
 desc3 = '''
 EXAMPLES
-      Build a distance matrix for a set of fasta sequence files:
-      > cbd-buildmatrix mystudy.input
+      Build a distance matrix for a set of sequence files where the format is
+      determined by the file extension:
+      > cbd-buildmatrix mystudy.list
 
       Build a distance matrix for a set of fastq sequence files:
-      > cbd-buildmatrix --format fastq mystudy.input
+      > cbd-buildmatrix --format fastq mystudy.list
 
 SEE ALSO
       cbd-getmatrix
       cbd-filtermatrix
+      cbd-plotmatrix
 
 AUTHORS
       Mike Mundy, Fang Yang, Nicholas Chia, Patricio Jeraldo 
@@ -68,7 +74,7 @@ if __name__ == "__main__":
     # Parse options.
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
-    parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default='fasta')
+    parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default=None)
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
 #    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='https://kbase.us/services/shock-api/')
@@ -79,7 +85,6 @@ if __name__ == "__main__":
     
     # Create input parameters for build_matrix() function.
     input = dict()
-    input['format'] = args.format
     input['scale'] = args.scale
     input['node_ids'] = list()
 
@@ -89,33 +94,23 @@ if __name__ == "__main__":
     # Create a shock client.
     shockClient = ShockClient(args.shockurl, cbdClient._headers['AUTHORIZATION'])
     
-    # Open the input file with the list of files.
-    try:
-        infile = open(args.inputPath, "r")
-    except IOError as e:
-        print "Error opening input list file '%s': %s" %(args.inputPath, e.strerror)
+    # Parse the input file with the list of sequence files.
+    (fileList, extensions, numMissingFiles) = parse_input_file(args.inputPath)
+    if numMissingFiles > 0:
         exit(1)
-  
-    # Make sure all of the files in the list of files exist. 
-    missingFiles = 0
-    filelist = []
-    for line in infile:
-        line = line.strip('\n\r')
-        if line and line[0] != '#': # Skip empty lines
-            fields = line.split('\t')
-            filename = fields[0]
-            if os.path.isfile(filename):
-                filelist.append(filename)
-            else:
-                print "'%s' does not exist" %(filename)
-                missingFiles += 1
-    infile.close()
-    if missingFiles > 0:
-        print "%d files are not accessible. Update %s with correct file names" %(missingFiles, args.inputPath)
-        exit(1)
+
+    # Set the format based on the sequence file extension if the format argument was not specified.
+    if args.format is None:
+        if len(extensions) == 1:
+            input['format'] = extensions.keys()[0]
+        else:
+            print "The format of the sequence files could not be determined.  Set the format with the --format argument."
+            exit(1)
+    else:
+        input['format'] = args.format
         
     # For each file, upload to shock (keep track of ids).
-    for filename in filelist:
+    for filename in fileList:
         print "Uploading sequence file '%s'" %(filename)
         node = shockClient.create_node(filename, '')
         input['node_ids'].append(node['id'])
