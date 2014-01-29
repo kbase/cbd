@@ -22,9 +22,9 @@ DESCRIPTION
       sequence file contains the sequence reads for a microbial community.  The
       list of groups is a semicolon delimited list of group names.  In the
       following example, the sample1 fasta sequence file includes groups
-      patient1 and day7.
+      subject1 and day7.
 
-          /myhome/sample1.fasta    patient1;day7
+          /myhome/sample1.fasta    subject1;day7
 
       The sourcePath positional argument is the path to the source distance
       matrix created by cbd-buildmatrix and saved by cbd-getmatrix.
@@ -42,12 +42,12 @@ DESCRIPTION
 
 desc3 = '''
 EXAMPLES
-      Filter a distance matrix to select samples within group patient1:
-      > cbd-filtermatrix mystudy.input mystudy.csv dest.csv patient1
+      Filter a distance matrix to select samples within group subject1:
+      > cbd-filtermatrix mystudy.input mystudy.csv dest.csv subject1
 
-      Filter a distance matrix exclude samples with group patient5:
+      Filter a distance matrix exclude samples with group subject5:
       > cbd-filtermatrix --filter without
-        mystudy.input mystudy.csv dest.csv patient5
+        mystudy.input mystudy.csv dest.csv subject5
 
       Filter a distance matrix to select samples between groups day0, day7,
       and day14:

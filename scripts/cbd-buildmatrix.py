@@ -29,9 +29,9 @@ DESCRIPTION
       sequence file contains the sequence reads for a microbial community.  The
       list of groups is a semicolon delimited list of group names.  In the
       following example, the sample1 fasta sequence file includes groups
-      patient1 and day7.
+      subject1 and day7.
 
-          /myhome/sample1.fasta    patient1;day7
+          /myhome/sample1.fasta    subject1;day7
 
       Note that the group list field is not used by cbd-buildmatrix.
 

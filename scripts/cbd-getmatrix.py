@@ -47,7 +47,7 @@ AUTHORS
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-getmatrix', epilog=desc3)
     parser.add_argument('jobID', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('outputPath', help='path to output csv file', action='store', default=None)
     parser.add_argument('--ujs-url', help='url for user and job state service', action='store', dest='ujsURL', default='https://kbase.us/services/userandjobstate')

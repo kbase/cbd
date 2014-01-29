@@ -49,7 +49,7 @@ AUTHORS
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_filtermatrix', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-plotmatrix', epilog=desc3)
     parser.add_argument('sourcePath', help='path to source distance matrix file', action='store', default=None)
     parser.add_argument('destPath', help='path to destination distance matrix file', action='store', default=None)
     parser.add_argument('--type', help='type of plot to generate', action='store', dest='type', default='upgma')
