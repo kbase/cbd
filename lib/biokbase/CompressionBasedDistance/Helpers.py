@@ -59,7 +59,7 @@ def make_job_dir(workDirectory, jobID):
         os.makedirs(jobDirectory, 0775)
     return jobDirectory
 
-def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
+def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth, sequenceLen):
     # Download the file from Shock to the working directory.
     if nodeId is not None:
         shockClient = ShockClient(shockUrl, auth)
@@ -67,8 +67,17 @@ def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth):
 
     # Extract the sequences from the source file.
     with open(destFile, 'w') as f:
-        for seqRecord in SeqIO.parse(sourceFile, format):
-            f.write(str(seqRecord.seq) + '\n')
+        if sequenceLen > 0: # A length to trim to was specified
+            for seqRecord in SeqIO.parse(sourceFile, format):
+                seq = str(seqRecord.seq)
+                if len(seq) < sequenceLen:
+                    continue
+                if len(seq) > sequenceLen:
+                    seq = seq[:sequenceLen]
+                f.write(str(seq) + '\n')
+        else:
+            for seqRecord in SeqIO.parse(sourceFile, format):
+                f.write(str(seqRecord.seq) + '\n')
     return 0
 
 ''' Run a command in a new process. '''
