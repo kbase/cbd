@@ -79,6 +79,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
 #    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://kbase.us/services/shock-api/')
+    parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
@@ -119,11 +120,13 @@ if __name__ == "__main__":
     # Submit a job to build the distance matrix.
     try:
         jobid = cbdClient.build_matrix(input)
-    except:
+    except Exception as e:
+        print 'Error starting job: %s' %(e.message)
+        if args.showError:
+            traceback.print_exc(file=sys.stdout)
         # Delete all of the input files from shock if something went wrong.
         for nodeId in input['node_ids']:
             shockClient.delete(nodeId)
-        traceback.print_exc(file=sys.stderr)
         exit(1)
 
     print "Job '%s' submitted" %(jobid)

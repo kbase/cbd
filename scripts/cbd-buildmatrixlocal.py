@@ -2,7 +2,7 @@ import argparse
 import sys
 import os
 import traceback
-from biokbase.CompressionBasedDistance.Client import _read_inifile
+from biokbase.CompressionBasedDistance.Client import _read_inifile, ServerError as CBDServerError
 from biokbase.CompressionBasedDistance.Helpers import get_config, parse_input_file
 from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance
 
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default=None)
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
+    parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
     parser.usage = argparse.SUPPRESS
@@ -87,8 +88,10 @@ if __name__ == "__main__":
     try:
         worker = CompressionBasedDistance()
         jobid = worker.startJob(get_config(None), auth, input)
-    except:
-        traceback.print_exc(file=sys.stderr)
+    except Exception as e:
+        print 'Error starting job: %s' %(e.message)
+        if args.showError:
+            traceback.print_exc(file=sys.stdout)
         exit(1)
 
     print "Job '%s' submitted" %(jobid)
