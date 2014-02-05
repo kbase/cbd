@@ -27,6 +27,10 @@ class MergeError(Exception):
 class CompressError(Exception):
     pass
 
+# Exception thrown when sequence files have different sequence lengths.
+class SeqLenError(Exception):
+    pass
+
 class CompressionBasedDistance:
     
     def _cbdCalculator(self, fileList, scale, outputFile):
@@ -57,10 +61,15 @@ class CompressionBasedDistance:
         cbd_array = numpy.zeros((len(fnames), len(fnames)), dtype=float)
         for pair in pair_names:
             name1, name2 = pair.split(PairSeparator)
-            c1 = single_sizes[name1]
-            c2 = single_sizes[name2]
-            c12 = pair_sizes[pair]
-            distance = 1.0 - 2.0*(c1 + c2 - c12)/(c1 + c2)
+            c1 = float(single_sizes[name1])
+            c2 = float(single_sizes[name2])
+            c12 = float(pair_sizes[pair])
+            distance = 1.0 - ( 2.0 * ( (c1 + c2 - c12) / (c1 + c2) ) )
+            if distance > 1.0:
+                part1 = "Distance %f is greater than 1.0.  " %(distance)
+                part2 = "Check sequence read lengths and relative number of sequence reads.  "
+                part3 = "(c1=%f %s, c2=%f %s c12=%f %s)" %(c1, name1, c2, name2, c12, pair)
+                raise ValueError(part1+part2+part3)
             if scale == 'inf':
                 distance = distance/(1.0 - distance)
             cbd_array[indices[name1],indices[name2]] = distance
@@ -144,8 +153,10 @@ class CompressionBasedDistance:
             node = shockClient.get_node(nodeId)
             sourceFile = os.path.join(jobDirectory, node['file']['name'])
             destFile = '%s.sequence' %(os.path.splitext(sourceFile)[0])
+            if PairSeparator in destFile: # Check for pair separator string in file name and replace as needed.
+                destFile = destFile.replace(PairSeparator, '-')
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, config['shock_url'], context['token'],))
+            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, config['shock_url'], context['token'], input['sequence_length'],))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
@@ -154,19 +165,29 @@ class CompressionBasedDistance:
         for path in input['file_paths']:
             sourceFile = os.path.basename(path)
             destFile = '%s/%s.sequence' %(jobDirectory, os.path.splitext(sourceFile)[0])
+            if PairSeparator in destFile: # Check for pair separator string in file name and replace as needed.
+                destFile = destFile.replace(PairSeparator, '-')
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (None, path, input['format'], destFile, config['shock_url'], context['token'],))
+            result = pool.apply_async(extract_seq, (None, path, input['format'], destFile, config['shock_url'], context['token'], input['sequence_length'],))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
 
-        # Check for the pair separator string in the file names and replace as needed.
+        # Confirm that each file has sequences of the same length.
+        sequenceLengths = dict()
         for index in range(len(sequenceList)):
-            sourceFile = sequenceList[index]
-            if PairSeparator in sourceFile:
-                sequenceList[index] = sourceFile.replace(PairSeparator, '-')
+            seqf = open(sequenceList[index], 'r')
+            length = len(seqf.readline()) - 1 # Compensate for newline
+            if length in sequenceLengths:
+                sequenceLengths[length] += 1
+            else:
+                sequenceLengths[length] = 1
+            seqf.close()
+        if len(sequenceLengths) > 1:
+            self._cleanup(input, shockClient, jobDirectory, pool)
+            raise SeqLenError("All sequence files must have the same sequence length. These lengths were found: %s" %(sequenceLengths.keys()))
 
         # Sort the sequences.
         try:

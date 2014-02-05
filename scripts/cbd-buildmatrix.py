@@ -40,11 +40,18 @@ DESCRIPTION
       format.  If the --format argument is not specified, the format is set
       from the extension of the sequence files.
 
+      The --trim optional argument specifies the length to trim sequence reads
+      to.  Sequence reads shorter than the specified length are discarded.  All
+      sequence reads must be the same length.
+
       The --scale optional argument specifies the scale of the distance values.
       A value of 'std' means to use the standard scale of 0 to 1, where 0 means
       the two communities are identical and a value of 1 means the two
       communities are completely different.  A value of 'inf' means to use a
       scale from 0 to infinity.
+
+      The --show-error optional argument shows additional detailed information
+      when an exception occurs.
 
       A job is started to build the distance matrix and the job id is returned.
       Use the cbd-getmatrix command to monitor the status of the job.  When the
@@ -76,6 +83,7 @@ if __name__ == "__main__":
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default=None)
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
+    parser.add_argument('-t', '--trim', help='trim sequence reads to the specified length', action='store', dest='sequenceLen', type=int, default=0)
 #    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='https://kbase.us/services/shock-api/')
     parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
@@ -87,6 +95,7 @@ if __name__ == "__main__":
     # Create input parameters for build_matrix() function.
     input = dict()
     input['scale'] = args.scale
+    input['sequence_length'] = args.sequenceLen
     input['node_ids'] = list()
 
     # Create a cbd client (which must be authenticated).
