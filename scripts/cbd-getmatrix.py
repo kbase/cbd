@@ -28,8 +28,11 @@ DESCRIPTION
       0 means the two communities are identical and a value of 1 means the two
       communities are completely different.
 
-      The ujs-url optional argument specifies an alternate URL for the user and
-      job state service.
+      The --show-times optional argument displays the start and finish times
+      for successful jobs.
+
+      The --ujs-url optional argument specifies an alternate URL for the user
+      and job state service.
 '''
 
 desc3 = '''
@@ -50,6 +53,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-getmatrix', epilog=desc3)
     parser.add_argument('jobID', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('outputPath', help='path to output csv file', action='store', default=None)
+    parser.add_argument('--show-times', help='show job start and end timestamps', action='store_true', dest='showTimes', default=False)
     parser.add_argument('--ujs-url', help='url for user and job state service', action='store', dest='ujsURL', default='https://kbase.us/services/userandjobstate')
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
@@ -85,6 +89,10 @@ if __name__ == "__main__":
     shockClient.download_to_path(info['results']['shocknodes'][0], args.outputPath)
     shockClient.delete_node(info['results']['shocknodes'][0])
     
+    # Show job info.
+    if args.showTimes:
+        print 'Job started at %s and finished at %s' %(info['started'], info['last_update'])
+
     # Delete the job.
     ujsClient.delete_job(args.jobID)
     
