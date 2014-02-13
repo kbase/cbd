@@ -1,4 +1,4 @@
-#group-name	cbd	Compression Based Distance commands
+#group-name	cbd	Compression-Based Distance
 cbd-url	cbd
 cbd-buildmatrix	cbd
 cbd-getmatrix	cbd
