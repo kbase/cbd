@@ -31,12 +31,18 @@ module CompressionBasedDistance
 		list<string> node_ids - List of Shock node ids for input sequence files
 		string format - Format of input sequence files ('fasta', 'fastq', etc.)
 		string scale - Scale for distance matrix values ('std' or 'inf')
+		int sequence_length - Length to trim sequence reads to (shorter reads are discarded)
+		int min_reads - Minimum number of reads a sequence file must contain
+		int max_reads - Maximum number of reads to use from a sequence file
 			
 	*/
 	typedef structure {
 		list<string> node_ids;
 		string format;
 		string scale;
+		int sequence_length;
+		int min_reads;
+		int max_reads;
 	} BuildMatrixParams;
 	
 	/*

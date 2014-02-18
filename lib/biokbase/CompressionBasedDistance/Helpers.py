@@ -59,25 +59,39 @@ def make_job_dir(workDirectory, jobID):
         os.makedirs(jobDirectory, 0775)
     return jobDirectory
 
-def extract_seq(nodeId, sourceFile, format, destFile, shockUrl, auth, sequenceLen):
+def extract_seq(args):
     # Download the file from Shock to the working directory.
-    if nodeId is not None:
-        shockClient = ShockClient(shockUrl, auth)
-        shockClient.download_to_path(nodeId, sourceFile)
+    if args['nodeId'] is not None:
+        shockClient = ShockClient(args['shockUrl'], args['auth'])
+        shockClient.download_to_path(args['nodeId'], args['sourceFile'])
 
     # Extract the sequences from the source file.
-    with open(destFile, 'w') as f:
-        if sequenceLen > 0: # A length to trim to was specified
-            for seqRecord in SeqIO.parse(sourceFile, format):
+    numReads = 0
+    with open(args['destFile'], 'w') as f:
+        if args['sequenceLen'] > 0: # A length to trim to was specified
+            for seqRecord in SeqIO.parse(args['sourceFile'], args['format']):
                 seq = str(seqRecord.seq)
-                if len(seq) < sequenceLen:
+                if len(seq) < args['sequenceLen']:
                     continue
-                if len(seq) > sequenceLen:
-                    seq = seq[:sequenceLen]
+                if len(seq) > args['sequenceLen']:
+                    seq = seq[:args['sequenceLen']]
                 f.write(str(seq) + '\n')
-        else:
-            for seqRecord in SeqIO.parse(sourceFile, format):
+                numReads += 1
+                if numReads == args['maxReads']:
+                    break
+        elif args['maxReads'] > 0:
+            for seqRecord in SeqIO.parse(args['sourceFile'], args['format']):
                 f.write(str(seqRecord.seq) + '\n')
+                numReads += 1
+                if numReads == args['maxReads']:
+                    break
+        else:
+            for seqRecord in SeqIO.parse(args['sourceFile'], args['format']):
+                f.write(str(seqRecord.seq) + '\n')
+
+    # Delete the file if it does not have enough reads.
+    if args['minReads'] > 0 and numReads < args['minReads']:
+        os.remove(args['destFile'])
     return 0
 
 ''' Run a command in a new process. '''

@@ -51,6 +51,8 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default=None)
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
     parser.add_argument('-t', '--trim', help='trim sequence reads to the specified length', action='store', dest='sequenceLen', type=int, default=0)
+    parser.add_argument('--min-reads', help='minimum number of reads each sequence file must contain', action='store', dest='minReads', type=int, default=0)
+    parser.add_argument('--max-reads', help='maximum number of reads to process from each sequence file', action='store', dest='maxReads', type=int, default=0)
     parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
     usage = parser.format_usage()
     parser.description = desc1 + '      ' + usage + desc2
@@ -61,6 +63,8 @@ if __name__ == "__main__":
     input = dict()
     input['scale'] = args.scale
     input['sequence_length'] = args.sequenceLen
+    input['min_reads'] = args.minReads
+    input['max_reads'] = args.maxReads
     input['node_ids'] = list()
     input['file_paths'] = list()
 
