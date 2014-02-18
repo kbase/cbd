@@ -31,6 +31,10 @@ class CompressError(Exception):
 class SeqLenError(Exception):
     pass
 
+# Exception thrown when saving a file to Shock failed.
+class ShockError(Exception):
+    pass
+
 class CompressionBasedDistance:
     
     def _cbdCalculator(self, fileList, scale, outputFile):
@@ -156,7 +160,17 @@ class CompressionBasedDistance:
             if PairSeparator in destFile: # Check for pair separator string in file name and replace as needed.
                 destFile = destFile.replace(PairSeparator, '-')
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (nodeId, sourceFile, input['format'], destFile, config['shock_url'], context['token'], input['sequence_length'],))
+            args = dict() # Needs to be scoped here so each process gets its own copy
+            args['format'] = input['format']
+            args['shockUrl'] = config['shock_url']
+            args['auth'] = context['token']
+            args['sequenceLen'] = input['sequence_length']
+            args['minReads'] = input['min_reads']
+            args['maxReads'] = input['max_reads']
+            args['nodeId'] = nodeId
+            args['sourceFile'] = sourceFile
+            args['destFile'] = destFile
+            result = pool.apply_async(extract_seq, (args,))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
@@ -168,26 +182,44 @@ class CompressionBasedDistance:
             if PairSeparator in destFile: # Check for pair separator string in file name and replace as needed.
                 destFile = destFile.replace(PairSeparator, '-')
             sequenceList.append(destFile)
-            result = pool.apply_async(extract_seq, (None, path, input['format'], destFile, config['shock_url'], context['token'], input['sequence_length'],))
+            args = dict() # Needs to be scoped here so each process gets its own copy
+            args['format'] = input['format']
+            args['shockUrl'] = config['shock_url']
+            args['auth'] = context['token']
+            args['sequenceLen'] = input['sequence_length']
+            args['minReads'] = input['min_reads']
+            args['maxReads'] = input['max_reads']
+            args['nodeId'] = None
+            args['sourceFile'] = path
+            args['destFile'] = destFile
+            result = pool.apply_async(extract_seq, (args,))
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
                 self._cleanup(input, shockClient, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
 
-        # Confirm that each file has sequences of the same length.
+        # Confirm that each file met the criteria for sequence length and number of sequences.
         sequenceLengths = dict()
+        filesToRemove = list()
         for index in range(len(sequenceList)):
-            seqf = open(sequenceList[index], 'r')
-            length = len(seqf.readline()) - 1 # Compensate for newline
-            if length in sequenceLengths:
-                sequenceLengths[length] += 1
-            else:
-                sequenceLengths[length] = 1
-            seqf.close()
-        if len(sequenceLengths) > 1:
+            # See if the file did not have the minimum number of sequences.
+            if not os.path.exists(sequenceList[index]):
+                filesToRemove.append(index)
+                continue
+
+            # See if the file has no data.
+            if os.path.getsize(sequenceList[index]) == 0:
+                self._cleanup(input, shockClient, jobDirectory, pool)
+                raise SeqLenError("Sequence file '%s' has no sequences" %(sequenceList[index]))
+
+        filteredList = list()
+        for index in range(len(sequenceList)):
+            if index not in filesToRemove:
+                filteredList.append(sequenceList[index])
+        if len(filteredList) < 2:
             self._cleanup(input, shockClient, jobDirectory, pool)
-            raise SeqLenError("All sequence files must have the same sequence length. These lengths were found: %s" %(sequenceLengths.keys()))
+            raise SeqLenError("There are not enough sequence files that meet the sequence length or number of sequences criteria.")
 
         # Sort the sequences.
         try:
@@ -196,7 +228,7 @@ class CompressionBasedDistance:
             pass
         resultList = []
         sortedList = []
-        for sourceFile in sequenceList:
+        for sourceFile in filteredList:
             destFile = '%s.sorted' %(os.path.splitext(sourceFile)[0])
             sortedList.append(destFile)
             args = [ '/usr/bin/sort', '--output=%s' %(destFile), sourceFile ]
@@ -258,6 +290,11 @@ class CompressionBasedDistance:
         except:
             pass
         node = shockClient.create_node(csvFile, '')
+        if not node['id']:
+            # Shock let us down. Save the distance matrix in the work directory for possible recovery.
+            os.rename(csvFile, '%s/%s.csv' %(config['work_folder_path'], job['id']))
+            self._cleanup(input, shockClient, jobDirectory, pool)
+            raise ShockError("Error saving distance matrix file to Shock. A Shock node was not created.")
         
         # Mark the job as complete.
         results = { 'shocknodes': [ node['id'] ], 'shockurl': config['shock_url'] }
