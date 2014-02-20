@@ -54,6 +54,9 @@ DESCRIPTION
       the maximum number of sequence reads, all reads greater than the maximum
       are discarded.
 
+      The --extreme optional argument enables extreme compression which is
+      slower but can have a higher compression ratio.
+
       The --scale optional argument specifies the scale of the distance values.
       A value of 'std' means to use the standard scale of 0 to 1, where 0 means
       the two communities are identical and a value of 1 means the two
@@ -96,6 +99,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--trim', help='trim sequence reads to the specified length', action='store', dest='sequenceLen', type=int, default=0)
     parser.add_argument('--min-reads', help='minimum number of reads each sequence file must contain', action='store', dest='minReads', type=int, default=0)
     parser.add_argument('--max-reads', help='maximum number of reads to process from each sequence file', action='store', dest='maxReads', type=int, default=0)
+    parser.add_argument('--extreme', help='use extreme compression (slower but hopefully better compression ratio)', action='store_true', dest='extreme', default=False)
 #    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='http://kbase.us/services/shock-api/')
     parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
@@ -110,6 +114,10 @@ if __name__ == "__main__":
     input['sequence_length'] = args.sequenceLen
     input['min_reads'] = args.minReads
     input['max_reads'] = args.maxReads
+    if args.extreme:
+        input['extreme'] = 1
+    else:
+        input['extreme'] = 0
     input['node_ids'] = list()
 
     # Create a cbd client (which must be authenticated).
