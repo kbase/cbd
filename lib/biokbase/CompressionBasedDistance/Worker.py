@@ -93,7 +93,7 @@ class CompressionBasedDistance:
             shockClient.delete_node(nodeId)
             
         # Remove the work directory.
-        shutil.rmtree(jobDirectory)
+        #shutil.rmtree(jobDirectory)
             
         # Stop the process pool.
         pool.close()
@@ -268,7 +268,11 @@ class CompressionBasedDistance:
         compressedList = []
         for sourceFile in sortedList:
             compressedList.append(sourceFile+'.xz')
-            args = [ '/usr/bin/xz', '--keep', '-9e', '--no-warn', sourceFile ]
+            if input['extreme']:
+                level = '-9e'
+            else:
+                level = '-9'
+            args = [ '/usr/bin/xz', '--keep', level, '--no-warn', sourceFile ]
             result = pool.apply_async(run_command, (args,))
             resultList.append(result)
         for result in resultList:

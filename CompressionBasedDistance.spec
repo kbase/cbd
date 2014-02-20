@@ -34,6 +34,7 @@ module CompressionBasedDistance
 		int sequence_length - Length to trim sequence reads to (shorter reads are discarded)
 		int min_reads - Minimum number of reads a sequence file must contain
 		int max_reads - Maximum number of reads to use from a sequence file
+		int extreme - Set to true for extreme compression (slower but hopefully better ratio)
 			
 	*/
 	typedef structure {
@@ -43,6 +44,7 @@ module CompressionBasedDistance
 		int sequence_length;
 		int min_reads;
 		int max_reads;
+		int extreme;
 	} BuildMatrixParams;
 	
 	/*
