@@ -3,6 +3,9 @@ import os
 from biokbase.userandjobstate.client import UserAndJobState
 from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance as Worker
 from biokbase.CompressionBasedDistance.Helpers import make_job_dir, timestamp
+from biokbase import log
+
+VERSION = '1.4'
 #END_HEADER
 
 
@@ -53,6 +56,13 @@ the communities are completely different.
         if not os.path.exists(self.config['work_folder_path']):
             os.makedirs(self.config['work_folder_path'], 0775)
 
+        # Log info about the server configuration (need to create our own logger object since
+        # we do not have a context during initialization).
+        submod = os.environ.get('KB_SERVICE_NAME', 'CompressionBasedDistance')
+        mylog = log.log(submod, ip_address=True, authuser=True, module=True, method=True,
+            call_id=True, config=os.getenv('KB_DEPLOYMENT_CONFIG'))
+        mylog.log_message(log.INFO, 'Server started, version is '+VERSION)
+
         #END_CONSTRUCTOR
         pass
 
@@ -65,6 +75,7 @@ the communities are completely different.
             input['file_paths'] = list()
         worker = Worker()
         job_id = worker.startJob(self.config, self.ctx, input)
+        self.ctx.log_info('Started job '+job_id+' to build a matrix')
         
         #END build_matrix
 
