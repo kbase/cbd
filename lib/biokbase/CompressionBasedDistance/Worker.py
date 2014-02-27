@@ -200,7 +200,6 @@ class CompressionBasedDistance:
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
 
         # Confirm that each file met the criteria for sequence length and number of sequences.
-        sequenceLengths = dict()
         filesToRemove = list()
         for index in range(len(sequenceList)):
             # See if the file did not have the minimum number of sequences.
