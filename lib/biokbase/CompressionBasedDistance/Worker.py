@@ -7,6 +7,7 @@ from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, 
 from biokbase.userandjobstate.client import UserAndJobState
 from multiprocessing import Pool
 from itertools import combinations
+from biokbase import log
 
 # String used to separate components in paired file names.
 PairSeparator = '-cbdpair-'
@@ -87,13 +88,16 @@ class CompressionBasedDistance:
         outf.close()
         return
     
-    def _cleanup(self, input, shockClient, jobDirectory, pool):
+    def _cleanup(self, input, shockClient, context, jobDirectory, pool):
         # Delete input fasta files from Shock.
         for nodeId in input['node_ids']:
-            shockClient.delete_node(nodeId)
+            try:
+                shockClient.delete_node(nodeId)
+            except Exception as e:
+                self._log(context, log.ERR, 'Error deleting node %s from Shock: %s' %(nodeId, e.message))
             
         # Remove the work directory.
-        #shutil.rmtree(jobDirectory)
+        shutil.rmtree(jobDirectory)
             
         # Stop the process pool.
         pool.close()
@@ -101,6 +105,21 @@ class CompressionBasedDistance:
         
         return
     
+    def _log(self, context, level, message):
+        # Create a logger if this is the first time the method has been called.
+        if self.logger is None:
+            submod = os.environ.get('KB_SERVICE_NAME', 'CompressionBasedDistance')
+            self.logger = log.log(submod, ip_address=True, authuser=True, module=True, method=True,
+                call_id=True, config=os.getenv('KB_DEPLOYMENT_CONFIG'))
+
+        # Log the message.
+        self.logger.log_message(level, message, context['client_ip'], context['user_id'], context['module'],
+                                context['method'], context['call_id'])
+        return
+
+    def __init__(self):
+        self.logger = None
+
     def startJob(self, config, context, input):
         # Create a user and job state client and authenticate as the user.
         ujsClient = UserAndJobState(config['userandjobstate_url'], token=context['token'])
@@ -174,7 +193,7 @@ class CompressionBasedDistance:
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
         for path in input['file_paths']:
             sourceFile = os.path.basename(path)
@@ -196,7 +215,7 @@ class CompressionBasedDistance:
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
 
         # Confirm that each file met the criteria for sequence length and number of sequences.
@@ -209,7 +228,7 @@ class CompressionBasedDistance:
 
             # See if the file has no data.
             if os.path.getsize(sequenceList[index]) == 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise SeqLenError("Sequence file '%s' has no sequences" %(sequenceList[index]))
 
         filteredList = list()
@@ -217,7 +236,7 @@ class CompressionBasedDistance:
             if index not in filesToRemove:
                 filteredList.append(sequenceList[index])
         if len(filteredList) < 2:
-            self._cleanup(input, shockClient, jobDirectory, pool)
+            self._cleanup(input, shockClient, context, jobDirectory, pool)
             raise SeqLenError("There are not enough sequence files that meet the sequence length or number of sequences criteria.")
 
         # Sort the sequences.
@@ -235,7 +254,7 @@ class CompressionBasedDistance:
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise SortError("Error sorting sequence file, result: %d" %(result.get()))
              
         # Create combined and sorted files.
@@ -255,7 +274,7 @@ class CompressionBasedDistance:
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise MergeError("Error merging sequence files, result: %d" %(result.get()))
                    
         # Compress all sorted files.
@@ -276,7 +295,7 @@ class CompressionBasedDistance:
             resultList.append(result)
         for result in resultList:
             if result.get() != 0:
-                self._cleanup(input, shockClient, jobDirectory, pool)
+                self._cleanup(input, shockClient, context, jobDirectory, pool)
                 raise CompressError("Error compressing sequence file, result: %d" %(result.get()))
         
         # Calculate the distance matrix.
@@ -296,7 +315,7 @@ class CompressionBasedDistance:
         if not node['id']:
             # Shock let us down. Save the distance matrix in the work directory for possible recovery.
             os.rename(csvFile, '%s/%s.csv' %(config['work_folder_path'], job['id']))
-            self._cleanup(input, shockClient, jobDirectory, pool)
+            self._cleanup(input, shockClient, context, jobDirectory, pool)
             raise ShockError("Error saving distance matrix file to Shock. A Shock node was not created.")
         
         # Mark the job as complete.
@@ -304,7 +323,7 @@ class CompressionBasedDistance:
         ujsClient.complete_job(job['id'], context['token'], 'done', None, results)
 
         # Cleanup after ourselves.
-        self._cleanup(input, shockClient, jobDirectory, pool)
+        self._cleanup(input, shockClient, context, jobDirectory, pool)
         
         return
 
