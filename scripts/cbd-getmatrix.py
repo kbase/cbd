@@ -82,17 +82,25 @@ if __name__ == "__main__":
             %(args.jobID, info['status'], info['total_progress'], info['max_progress'])
         exit(1)
 
-    # Create a shock client.
-    shockClient = ShockClient(info['results']['shockurl'], ujsClient._headers['AUTHORIZATION'])
-       
-    # Download the output to the specified file and remove the file from shock.
-    shockClient.download_to_path(info['results']['shocknodes'][0], args.outputPath)
-    shockClient.delete(info['results']['shocknodes'][0])
-    
     # Show job info.
     if args.showTimes:
         print 'Job started at %s and finished at %s' %(info['started'], info['last_update'])
 
+    # Create a shock client.
+    shockClient = ShockClient(info['results']['shockurl'], ujsClient._headers['AUTHORIZATION'])
+       
+    # Download the output to the specified file and remove the file from shock.
+    try:
+        shockClient.download_to_path(info['results']['shocknodes'][0], args.outputPath)
+    except Exception as e:
+        print 'Error downloading distance matrix from %s: %s' %(info['results']['shockurl'], e.message)
+        traceback.print_exc(file=sys.stdout)
+    try:
+        shockClient.delete(info['results']['shocknodes'][0])
+    except Exception as e:
+        print 'Error deleting distance matrix file from %s: ' %(+info['results']['shockurl'], e.message)
+        traceback.print_exc(file=sys.stdout)
+    
     # Delete the job.
     ujsClient.delete_job(args.jobID)
     
