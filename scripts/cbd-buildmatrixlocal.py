@@ -3,8 +3,7 @@ import sys
 import os
 import traceback
 from biokbase.CompressionBasedDistance.Client import _read_inifile, ServerError as CBDServerError
-from biokbase.CompressionBasedDistance.Helpers import get_config, parse_input_file
-from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance
+from biokbase.CompressionBasedDistance.Helpers import get_config, parse_input_file, start_job
 
 desc1 = '''
 NAME
@@ -97,8 +96,7 @@ if __name__ == "__main__":
         
     # Submit a job to build the distance matrix.
     try:
-        worker = CompressionBasedDistance()
-        jobid = worker.startJob(get_config(None), auth, input)
+        jobid = start_job(get_config(None), auth, input)
     except Exception as e:
         print 'Error starting job: %s' %(e.message)
         if args.showError:

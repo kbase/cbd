@@ -4,7 +4,9 @@ import os
 import subprocess
 import sys
 import time
+import json
 from shock import Client as ShockClient
+from biokbase.userandjobstate.client import UserAndJobState
 from ConfigParser import ConfigParser
 from Bio import SeqIO
 
@@ -12,7 +14,7 @@ from Bio import SeqIO
 class CommandError(Exception):
     pass
 
-DefaultURL = 'http://kbase.us/services/cbd/'
+DefaultURL = 'https://kbase.us/services/cbd/'
 
 def get_url():
     if 'KB_RUNNING_IN_IRIS' not in os.environ:
@@ -171,3 +173,30 @@ def parse_input_file(inputPath):
         print "%d files are not accessible. Update %s with correct file names" %(numMissingFiles, inputPath)
 
     return fileList, extensions, numMissingFiles
+
+def start_job(config, context, input):
+    # Create a user and job state client and authenticate as the user.
+    ujsClient = UserAndJobState(config['userandjobstate_url'], token=context['token'])
+
+    # Create a job to track building the distance matrix.
+    status = 'initializing'
+    description = 'cbd-buildmatrix with %d files for user %s' %(len(input['node_ids'])+len(input['file_paths']), context['user_id'])
+    progress = { 'ptype': 'task', 'max': 6 }
+    job_id = ujsClient.create_and_start_job(context['token'], status, description, progress, timestamp(3600))
+
+    # Create working directory for job and build file names.
+    jobDirectory = make_job_dir(config['work_folder_path'], job_id)
+    jobDataFilename = os.path.join(jobDirectory, 'jobdata.json')
+    outputFilename = os.path.join(jobDirectory, 'stdout.log')
+    errorFilename = os.path.join(jobDirectory, 'stderr.log')
+
+    # Save data required for running the job.
+    # Another option is to create a key of the jobid and store state.
+    jobData = { 'id': job_id, 'input': input, 'context': context, 'config': config }
+    json.dump(jobData, open(jobDataFilename, "w"), indent=4)
+
+    # Start worker to run the job.
+    jobScript = os.path.join(os.environ['KB_TOP'], 'bin/cbd-runjob')
+    cmdline = "nohup %s %s >%s 2>%s &" %(jobScript, jobDataFilename, outputFilename, errorFilename)
+    status = os.system(cmdline)
+    return job_id
