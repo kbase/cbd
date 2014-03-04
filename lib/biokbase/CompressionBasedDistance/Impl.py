@@ -1,8 +1,7 @@
 #BEGIN_HEADER
 import os
 from biokbase.userandjobstate.client import UserAndJobState
-from biokbase.CompressionBasedDistance.Worker import CompressionBasedDistance as Worker
-from biokbase.CompressionBasedDistance.Helpers import make_job_dir, timestamp
+from biokbase.CompressionBasedDistance.Helpers import start_job
 from biokbase import log
 
 VERSION = '1.4'
@@ -73,8 +72,7 @@ the communities are completely different.
         
         if 'file_paths' not in input:
             input['file_paths'] = list()
-        worker = Worker()
-        job_id = worker.startJob(self.config, self.ctx, input)
+        job_id = start_job(self.config, self.ctx, input)
         self.ctx.log_info('Started job '+job_id+' to build a matrix')
         
         #END build_matrix

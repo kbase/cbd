@@ -151,7 +151,7 @@ if __name__ == "__main__":
     try:
         jobid = cbdClient.build_matrix(input)
     except Exception as e:
-        print 'Error starting job: %s' %(e.message)
+        print 'Error starting job: %s' %(e)
         if args.showError:
             traceback.print_exc(file=sys.stdout)
         # Delete all of the input files from shock if something went wrong.
