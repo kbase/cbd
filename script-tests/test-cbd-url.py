@@ -16,7 +16,7 @@ class TestUrlScript(unittest.TestCase):
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 0)
-        self.assertNotEqual(so.find("http://"), -1)
+        self.assertNotEqual(so.find("http"), -1)
         self.assertEqual(se, '')
         lines = so.split("\n")
         self.url = lines[1]
