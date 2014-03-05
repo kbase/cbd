@@ -1,5 +1,4 @@
 #group-name	cbd	Compression Based Distance commands
-cbd-url	cbd
 cbd-buildmatrix	cbd
 cbd-getmatrix	cbd
 cbd-filtermatrix	cbd
