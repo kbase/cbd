@@ -61,6 +61,9 @@ the communities are completely different.
         mylog = log.log(submod, ip_address=True, authuser=True, module=True, method=True,
             call_id=True, config=os.getenv('KB_DEPLOYMENT_CONFIG'))
         mylog.log_message(log.INFO, 'Server started, version is '+VERSION)
+        configValues = 'shock_url='+self.config['shock_url']+', userandjobstate_url='+self.config['userandjobstate_url']
+        configValues += ', work_folder_path='+self.config['work_folder_path']+', num_pool_processes='+self.config['num_pool_processes']
+        mylog.log_message(log.INFO, configValues)
 
         #END_CONSTRUCTOR
         pass
