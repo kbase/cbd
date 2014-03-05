@@ -17,6 +17,36 @@ the communities are completely different.
 Compression-based distance (CBD): a simple, rapid, and accurate method for
 microbiota composition comparison. BMC Bioinformatics 2013, 14:136.
 
+VERSION: 1.4.0 (Released 03/10/2014)
+------------------------------------------
+NEW FEATURES:
+-None.
+
+UPDATED FEATURES / MAJOR BUG FIXES:
+-Updated cbd-buildmatrix and cbd-buildmatrixlocal to automatically determine
+ file format from file extension.
+-Added --trim option to cbd-buildmatrix and cbd-buildmatrixlocal to trim
+ sequences to a common length.
+-Added --min-reads and --max-reads options to cbd-buildmatrix and
+ cbd-buildmatrixlocal.  Use --min-reads to make sure a sequence file has a
+ minimum number of sequence reads.  Use --max-reads to limit the number of
+ sequence reads used from a sequence file.  The algorithm does not work when
+ the sequence files have significantly different numbers of sequence reads.
+-Added --extreme option to cbd-buildmatrix and cbd-buildmatrixlocal to use
+ extreme compression which is slower but can have a higher compression ratio.
+-Improved error reporting and added --show-error option to cbd-buildmatrix
+ and cbd-buildmatrixlocal commands.
+-Added --url option to cbd-buildmatrix, removed cbd-url from IRIS environment,
+ and changed cbd-url to use standard KBase config file.
+-Added --show-times option to cbd-getmatrix to show start and finish times
+ for successful jobs.
+-Added two new plots to cbd-plotmatrix for generating dendrogram and metric
+ dimensional scaling plots along with additional options for controlling the
+ format of the plots.
+
+ANTICIPATED FUTURE DEVELOPMENTS:
+-None.
+
 VERSION: 1.3.0 (Released 01/06/2014)
 ------------------------------------------
 NEW FEATURES:
