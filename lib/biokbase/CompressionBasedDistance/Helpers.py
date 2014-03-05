@@ -7,6 +7,7 @@ import time
 import json
 from shock import Client as ShockClient
 from biokbase.userandjobstate.client import UserAndJobState
+from biokbase.auth import kb_config
 from ConfigParser import ConfigParser
 from Bio import SeqIO
 
@@ -17,43 +18,63 @@ class CommandError(Exception):
 DefaultURL = 'https://kbase.us/services/cbd/'
 
 def get_url():
-    if 'KB_RUNNING_IN_IRIS' not in os.environ:
-        filename = os.path.join(os.environ['HOME'], '.kbase_cbdURL')
-    else:
-        filename = '/.kbase_cbdURL'
-    if os.path.exists(filename):
-        fid = open(filename, 'r')
-        currentURL = fid.readline()
-        currentURL.strip()
-        fid.close()
+    # Just return the default URL when running in IRIS.
+    if 'KB_RUNNING_IN_IRIS' in os.environ:
+        return DefaultURL
+
+    # Get the URL from the config file or use the default if it is not set.
+    config = get_config(kb_config)
+    if 'url' in config:
+        currentURL = config['url']
     else:
         currentURL = DefaultURL;
     return currentURL
 
 def set_url(newURL):
+    # Check for special value for the default URL.
     if newURL ==  'default':
         newURL = DefaultURL
-    if 'KB_RUNNING_IN_IRIS' not in os.environ:
-        filename = os.path.join(os.environ['HOME'], '.kbase_cbdURL')
-    else:
-        filename = '/.kbase_cbdURL'
-    fid = open(filename, 'w')
-    fid.write(newURL)
-    fid.close()
-    return newURL
+
+    # Just return the URL when running in IRIS. There is no place to save it.
+    if 'KB_RUNNING_IN_IRIS' in os.environ:
+        return newURL
     
-def get_config(filename):
+    # Save the new URL to the config file.
+    config = read_config(kb_config)
+    config.set('CompressionBasedDistance', 'url', newURL)
+    with open(kb_config, 'w') as configfile:
+        config.write(configfile)
+    return newURL
+
+def read_config(filename):
     # Use default config file if one is not specified.
     if filename == None:
         filename = os.path.join(os.environ['KB_TOP'], 'deployment.cfg')
-        
-    # Read the config file and extract the probabilistic annotation section.
-    retconfig = {}
+
+    # Read the config file.
     config = ConfigParser()
-    config.read(filename)
+    try:
+        config.read(filename)
+    except Exception as e:
+        print "Error while reading config file %s: %s" % (filename, e)
+
+    # Make sure there is a CompressionBasedDistance section in the config file.
+    if not config.has_section('CompressionBasedDistance'):
+        config.add_section('CompressionBasedDistance')
+        with open(filename, 'w') as configfile:
+            config.write(configfile)
+
+    return config
+
+def get_config(filename):
+    # Read the config file.
+    config = read_config(filename)
+
+    # Extract the CompressionBasedDistance section from the config file.
+    sectionConfig = dict()
     for nameval in config.items('CompressionBasedDistance'):
-        retconfig[nameval[0]] = nameval[1]
-    return retconfig
+        sectionConfig[nameval[0]] = nameval[1]
+    return sectionConfig
 
 def make_job_dir(workDirectory, jobID):
     jobDirectory = os.path.join(workDirectory, jobID)

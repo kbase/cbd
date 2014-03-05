@@ -99,7 +99,7 @@ if __name__ == "__main__":
     parser.add_argument('--min-reads', help='minimum number of reads each sequence file must contain', action='store', dest='minReads', type=int, default=0)
     parser.add_argument('--max-reads', help='maximum number of reads to process from each sequence file', action='store', dest='maxReads', type=int, default=0)
     parser.add_argument('--extreme', help='use extreme compression (slower but hopefully better compression ratio)', action='store_true', dest='extreme', default=False)
-#    parser.add_argument('-u', '--url', help='url for cbd service', action='store', dest='url', default='http://kbase.us/services/cbd/')
+    parser.add_argument('-u', '--url', help='url for service', action='store', dest='url', default=None)
     parser.add_argument('--shock-url', help='url for shock service', action='store', dest='shockurl', default='https://kbase.us/services/shock-api/')
     parser.add_argument('-e', '--show-error', help='show detailed information for an exception', action='store_true', dest='showError', default=False)
     usage = parser.format_usage()
@@ -120,7 +120,9 @@ if __name__ == "__main__":
     input['node_ids'] = list()
 
     # Create a cbd client (which must be authenticated).
-    cbdClient = CompressionBasedDistance(url=get_url())
+    if args.url is None:
+        args.url = get_url()
+    cbdClient = CompressionBasedDistance(url=args.url)
     
     # Create a shock client.
     shockClient = ShockClient(args.shockurl, cbdClient._headers['AUTHORIZATION'])
