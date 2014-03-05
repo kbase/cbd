@@ -102,8 +102,8 @@ if __name__ == "__main__":
         line = line.strip('\n\r')
         if line and line[0] != '#': # Skip empty and comment lines
             fields = line.split('\t')
-            if len(fields) != 2:
-                print "Each line must contain a path and group list.  The following line contains %d fields:" %(len(fields))
+            if len(fields) < 2 or len(fields) > 3:
+                print "Each line must contain a path and group list and an optional label.  The following line contains %d fields:" %(len(fields))
                 print "  " + line
                 exit(1)
             filePath = fields[0]
