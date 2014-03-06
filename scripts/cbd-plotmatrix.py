@@ -51,7 +51,7 @@ DESCRIPTION
       is 'source'.  The --input-file-path optional argument must be specified
       when using 'input' for the labels.  The --plot-options optional argument
       specifies a semicolon delimited list of options for controlling the plot.
-      The valid options are 'label_size', 'count_sort', and 'orientation'.
+      The valid options are 'labelsize', 'count_sort', and 'orientation'.
 
       For a 'mds' type of plot, the supported optional arguments are --title,
       --labels, --colors, --file-options, --plot-options.  The --title optional
@@ -66,11 +66,12 @@ DESCRIPTION
       the output file.  Any options supported by the R pdf() function can be
       used.  The --plot-options optional argument specifies a semicolon
       delimited list of options for controlling the plot.  Any options supported
-      by the R plot() function can be used.  The --colors optional argument is
-      a semicolon delimited list of groups and colors.  A point from a sample
-      with the specified group is drawn with the specified color.  The default
-      color is black.  The --input-file-path optional argument must be specified
-      when using the --colors optional argument.
+      by the R plot() function can be used.  Options that start with 'text.' are
+      used to control the text labels on the plot.  The --colors optional
+      argument is a semicolon delimited list of groups and colors.  A point from
+      a sample with the specified group is drawn with the specified color.  The
+      default color is black.  The --input-file-path optional argument must be
+      specified when using the --colors optional argument.
 
 '''
 
@@ -88,7 +89,7 @@ EXAMPLES
 
       Generate a MDS plot using the input list file for the labels:
       > cbd-plotmatrix --type mds --labels input --input-file-path mystudy.list
-          --file-options 'height=5.0;width=5.0' --plot-options pch=19
+          --file-options 'height=5.0;width=5.0' --plot-options 'pch=19;text.col=blue'
           --colors 'day1=blue;day7=orange' mystudy.csv mystudy.pdf
 
 SEE ALSO
@@ -245,7 +246,6 @@ def plot_mds(idList, args):
         if len(groupToColor) == 0:
             print "Error parsing colors argument '%s'" %(args.colors)
             exit(1)
-        print groupToColor
 
         # Open the input file with the list of sequence files, groups, and labels.
         try:
@@ -288,13 +288,9 @@ def plot_mds(idList, args):
         # Use the sample IDs from the source distance matrix for the labels.
         labelList = idList
 
-    elif args.labels == 'none':
-        # There are no labels for the points.
-        for index in range(len(labelList)):
-            labelList[index] = ''
-
-    elif args.labels != 'input':
-        print 'Label type %s is not supported.' %(args.labels)
+    elif args.labels != 'input' and args.labels != 'none':
+        print "Label type '%s' is not supported." %(args.labels)
+        exit(1)
 
     # Run the R commands to create the points for the MDS plot.
     ro.r('input.data <- read.csv("%s")' %(args.sourcePath))
@@ -304,47 +300,60 @@ def plot_mds(idList, args):
     y = ro.r('fit$points[,2]')
 
     # Parse the options to pass to the pdf command.
-    kwargs = dict()
+    fileArgs = dict()
     if args.fileOptions is not None:
         optionList = args.fileOptions.split(';')
         for index in range(len(optionList)):
             fields = optionList[index].split('=')
             try:
-                kwargs[fields[0]] = float(fields[1])
+                fileArgs[fields[0]] = float(fields[1])
             except:
-                kwargs[fields[0]] = fields[1]
+                fileArgs[fields[0]] = fields[1]
 
     # Open the pdf device.
-    ro.r.pdf(args.destPath, **kwargs)
+    ro.r.pdf(args.destPath, **fileArgs)
 
-    # Parse the options to pass to the plot command.
-    kwargs = dict()
+    # Parse the options for creating the plot.
+    plotArgs = dict()
+    textArgs = dict()
     if args.plotOptions is not None:
         optionList = args.plotOptions.split(';')
         for index in range(len(optionList)):
             fields = optionList[index].split('=')
             try:
-                kwargs[fields[0]] = float(fields[1])
+                value = float(fields[1])
             except:
-                kwargs[fields[0]] = fields[1]
+                value = fields[1]
+            if fields[0].startswith('text.'):
+                keyword = fields[0].lstrip('text.')
+                textArgs[keyword] = value
+            else:
+                plotArgs[fields[0]] = value
 
     # Add default options if they haven't been overridden by the user.
-    if 'xlab' not in kwargs:
-        kwargs['xlab'] = 'Coordinate 1'
-    if 'ylab' not in kwargs:
-        kwargs['ylab'] = 'Coordinate 2'
-    if 'type' not in kwargs:
-        kwargs['type'] = 'p'
-    if 'pch' not in kwargs:
-        kwargs['pch'] = 17
-    kwargs['main'] = args.title
+    if 'xlab' not in plotArgs:
+        plotArgs['xlab'] = 'Coordinate 1'
+    if 'ylab' not in plotArgs:
+        plotArgs['ylab'] = 'Coordinate 2'
+    if 'type' not in plotArgs:
+        plotArgs['type'] = 'p'
+    if 'pch' not in plotArgs:
+        plotArgs['pch'] = 17
+    plotArgs['main'] = args.title
     colors = ro.StrVector(colorList)
     labels = ro.StrVector(labelList)
 
     # Generate the plot and save to file.
-    ro.r.plot(x, y, col=colors, **kwargs)
-    ro.r.text(x, y+0.03, labels = labels, cex=.4)
+    ro.r.plot(x, y, col=colors, **plotArgs)
     ro.r.abline(h=0, v=0)
+
+    # Add labels to the points.
+    if args.labels != 'none':
+        if 'pos' not in textArgs:
+            textArgs['pos'] = 3
+        if 'cex' not in textArgs:
+            textArgs['cex'] = 0.5
+        ro.r.text(x, y, labels = labels, **textArgs)
     ro.r('dev.off()')
     return
 

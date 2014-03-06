@@ -44,6 +44,10 @@ class TestPythonClient(unittest.TestCase):
         input = dict()
         input['format'] = 'fasta'
         input['scale'] = 'std'
+        input['sequence_length'] = 0
+        input['min_reads'] = 0
+        input['max_reads'] = 0
+        input['extreme'] = 1
         input['node_ids'] = list()
 
         # Upload the files to Shock.
