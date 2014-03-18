@@ -3,7 +3,7 @@ import numpy
 import shutil
 import json
 from shock import Client as ShockClient
-from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir, timestamp
+from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir, timestamp, CommandError
 from biokbase.userandjobstate.client import UserAndJobState
 from multiprocessing import Pool
 from itertools import combinations
@@ -187,9 +187,11 @@ class CompressionBasedDistance:
             result = self.pool.apply_async(extract_seq, (args,))
             resultList.append(result)
         for result in resultList:
-            if result.get() != 0:
+            try:
+                result.get()
+            except Exception as e:
                 self._cleanup()
-                raise ExtractError("Error extracting sequences from input sequence file, result: %d" %(result.get()))
+                raise ExtractError("Error extracting sequences from input sequence file: %s" %(e.message))
 
         # Confirm that each file met the criteria for sequence length and number of sequences.
         filesToRemove = list()
@@ -226,9 +228,11 @@ class CompressionBasedDistance:
             result = self.pool.apply_async(run_command, (args,))
             resultList.append(result)
         for result in resultList:
-            if result.get() != 0:
+            try:
+                result.get()
+            except CommandError as e:
                 self._cleanup()
-                raise SortError("Error sorting sequence file, result: %d" %(result.get()))
+                raise SortError("Error sorting sequence file: %s\nCommand: '%s'\nStdout: '%s'\nStderr: '%s'" %(e.message, e.cmd, e.stdout, e.stderr))
              
         # Create combined and sorted files.
         try:
@@ -246,9 +250,11 @@ class CompressionBasedDistance:
             result = self.pool.apply_async(run_command, (args,))
             resultList.append(result)
         for result in resultList:
-            if result.get() != 0:
+            try:
+                result.get()
+            except CommandError as e:
                 self._cleanup()
-                raise MergeError("Error merging sequence files, result: %d" %(result.get()))
+                raise MergeError("Error merging sequence file: %s\nCommand: '%s'\nStdout: '%s'\nStderr: '%s'" %(e.message, e.cmd, e.stdout, e.stderr))
                    
         # Compress all sorted files.
         try:
@@ -267,9 +273,11 @@ class CompressionBasedDistance:
             result = self.pool.apply_async(run_command, (args,))
             resultList.append(result)
         for result in resultList:
-            if result.get() != 0:
+            try:
+                result.get()
+            except CommandError as e:
                 self._cleanup()
-                raise CompressError("Error compressing sequence file, result: %d" %(result.get()))
+                raise CompressError("Error compressing sequence file: %s\nCommand: '%s'\nStdout: '%s'\nStderr: '%s'" %(e.message, e.cmd, e.stdout, e.stderr))
         
         # Calculate the distance matrix.
         try:

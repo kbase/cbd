@@ -120,18 +120,27 @@ def extract_seq(args):
 ''' Run a command in a new process. '''
 
 def run_command(args):
+    err = CommandError()
     try:
-        retcode = subprocess.call(args)
-        if retcode < 0:
-            cmd = ' '.join(args)
-            raise CommandError("'%s' was terminated by signal %d" %(cmd, -retcode))
+        proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        (err.stdout, err.stderr) = proc.communicate()
+        err.retcode = proc.returncode
+        if err.retcode < 0:
+            err.cmd = ' '.join(args)
+            err.message = "'%s' was terminated by signal %d" %(args[0], -err.retcode)
+            raise err
         else:
-            if retcode > 0:
-                cmd = ' '.join(args)
-                raise CommandError("'%s' failed with status %d" %(cmd, retcode))
+            if err.retcode > 0:
+                err.cmd = ' '.join(args)
+                err.message = "'%s' failed with return code %d" %(args[0], err.retcode)
+                raise err
     except OSError as e:
-        cmd = ' '.join(args)
-        raise CommandError("Failed to run '%s': %s" %(cmd, e.strerror))
+        err.cmd = ' '.join(args)
+        err.message = "Failed to run '%s': %s" %(args[0], e.strerror)
+        err.stdout = ''
+        err.stderr = ''
+        err.retcode = 255
+        raise err
     return 0
 
 ''' Get a timestamp in the format required by user and job state service.
