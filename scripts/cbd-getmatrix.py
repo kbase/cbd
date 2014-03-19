@@ -50,7 +50,7 @@ AUTHORS
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-getmatrix', epilog=desc3)
     parser.add_argument('jobID', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('outputPath', help='path to output csv file', action='store', default=None)
     parser.add_argument('--show-times', help='show job start and end timestamps', action='store_true', dest='showTimes', default=False)

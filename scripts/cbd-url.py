@@ -36,7 +36,7 @@ AUTHORS
 '''
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_url', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-url', epilog=desc3)
     parser.add_argument('-?', '--usage', help='show usage information', action='store_true', dest='usage')
     parser.add_argument('newurl', nargs='?', default=None, help='New URL endpoint')
     usage = parser.format_usage()
