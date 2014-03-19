@@ -239,13 +239,14 @@ def plot_mds(idList, args):
 
         # Parse the colors argument which assigns a color to a group.
         groupToColor = dict()
-        itemList = args.colors.split(';') # Each group=color item is delimited by a semicolon
-        for index in range(len(itemList)):
-            pair = itemList[index].split('=')
-            groupToColor[pair[0]] = pair[1]
-        if len(groupToColor) == 0:
-            print "Error parsing colors argument '%s'" %(args.colors)
-            exit(1)
+        if args.colors is not None:
+            itemList = args.colors.split(';') # Each group=color item is delimited by a semicolon
+            for index in range(len(itemList)):
+                pair = itemList[index].split('=')
+                groupToColor[pair[0]] = pair[1]
+            if len(groupToColor) == 0:
+                print "Error parsing colors argument '%s'" %(args.colors)
+                exit(1)
 
         # Open the input file with the list of sequence files, groups, and labels.
         try:
@@ -359,7 +360,7 @@ def plot_mds(idList, args):
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_filtermatrix', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-plotmatrix', epilog=desc3)
     parser.add_argument('sourcePath', help='path to source distance matrix file', action='store', default=None)
     parser.add_argument('destPath', help='path to destination distance matrix file', action='store', default=None)
     parser.add_argument('--type', help='type of plot to generate', action='store', dest='type', default='tree')
