@@ -96,7 +96,7 @@ AUTHORS
 
 if __name__ == "__main__":
     # Parse options.
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd_buildmatrix', epilog=desc3)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, prog='cbd-buildmatrix', epilog=desc3)
     parser.add_argument('inputPath', help='path to file with list of input sequence files', action='store', default=None)
     parser.add_argument('-f', '--format', help='format of input sequence files', action='store', dest='format', default=None)
     parser.add_argument('-s', '--scale', help='scale for distance matrix values', action='store', dest='scale', default='std')
