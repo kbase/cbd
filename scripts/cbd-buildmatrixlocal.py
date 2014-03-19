@@ -98,7 +98,7 @@ if __name__ == "__main__":
     try:
         jobid = start_job(get_config(None), auth, input)
     except Exception as e:
-        print 'Error starting job: %s' %(e.message)
+        print 'Error starting job: '+e.message
         if args.showError:
             traceback.print_exc(file=sys.stdout)
         exit(1)

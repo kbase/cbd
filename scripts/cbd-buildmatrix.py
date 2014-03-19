@@ -24,16 +24,17 @@ DESCRIPTION
 
       The inputPath positional argument is the path to a file with the list of
       paths to the input sequence files and the groups each file belongs to.
-      Each line of the list file has two tab delimited fields: (1) path to a
-      sequence file, (2) list of groups the sequence file belongs to.  Each
-      sequence file contains the sequence reads for a microbial community.  The
-      list of groups is a semicolon delimited list of group names.  In the
-      following example, the sample1 fasta sequence file includes groups
-      subject1 and day7.
+      Each line of the list file has three tab delimited fields: (1) path to a
+      sequence file, (2) list of groups the sequence file belongs to, and (3)
+      label to use for the sample in plots.  Each sequence file contains the
+      sequence reads for a microbial community.  The list of groups is a
+      semicolon delimited list of group names.  The label is optional and if it
+      is not specified the file name is used for the label.  In the following
+      example, the sample1 fasta sequence file includes two groups.
 
           /myhome/sample1.fasta    subject1;day7
 
-      Note that the group list field is not used by cbd-buildmatrix.
+      Note that the group list and label fields are not used by cbd-buildmatrix.
 
       The --format optional argument specifies the type of the sequence files.
       Valid formats include 'fasta', 'fastq', 'clustal', 'embl', 'genbank',
@@ -62,6 +63,10 @@ DESCRIPTION
       the two communities are identical and a value of 1 means the two
       communities are completely different.  A value of 'inf' means to use a
       scale from 0 to infinity.
+
+      The --url optional argument specifies an alternate URL for the service
+      endpoint.  The --shock-url optional argument specifies an alternate URL
+      for the shock service endpoint.
 
       The --show-error optional argument shows additional detailed information
       when an exception occurs.
@@ -153,7 +158,7 @@ if __name__ == "__main__":
     try:
         jobid = cbdClient.build_matrix(input)
     except Exception as e:
-        print 'Error starting job: %s' %(e)
+        print 'Error starting job: '+e.message
         if args.showError:
             traceback.print_exc(file=sys.stdout)
         # Delete all of the input files from shock if something went wrong.
