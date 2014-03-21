@@ -38,6 +38,14 @@ class ShockError(Exception):
 
 class CompressionBasedDistance:
     
+    ''' Calculate the compression based distance metric and save distance matrix to a file.
+
+        @param fileList List of paths to compressed files
+        @param scale Scale of distance values, 'std' for 0 to 1, 'inf' for 0 to infinity
+        @param outputFile Path to file with output distance matrix
+        @return Nothing
+    '''
+
     def _cbdCalculator(self, fileList, scale, outputFile):
         # Parse the files.
         single_sizes = dict()
@@ -88,6 +96,12 @@ class CompressionBasedDistance:
         outf.close()
         return
     
+    ''' Cleanup after running a job.
+
+        @note All temporary files are removed even when there is an error.
+        @return Nothing
+    '''
+
     def _cleanup(self):
         # Delete input fasta files from Shock.
         for nodeId in self.input['node_ids']:
@@ -105,6 +119,13 @@ class CompressionBasedDistance:
         
         return
     
+    ''' Log a message to the system log.
+
+        @param level Message level (INFO, WARNING, etc.)
+        @param message Message text
+        @return Nothing
+    '''
+
     def _log(self, level, message):
         # Create a logger if this is the first time the method has been called.
         if self.logger is None:
@@ -119,6 +140,20 @@ class CompressionBasedDistance:
 
     def __init__(self):
         self.logger = None
+
+    ''' Run a job to build a distance matrix.
+
+        When successful the distance matrix csv file is stored in Shock.
+
+        @param job Dictionary with configuration variables, context variables, and input variables for job
+        @raise ExtractError: Error extracting sequences from input sequence file
+        @raise SeqLenError: Error with lengths of sequences in input sequence file
+        @raise SortError: Error sorting a raw sequence file
+        @raise MergeError: Error merging a raw sequence file
+        @raise CompressError: Error compressing a raw sequence file
+        @raise ShockError: Error saving file to Shock
+        @return Nothing
+    '''
 
     def runJob(self, job):
         

@@ -15,7 +15,11 @@ from Bio import SeqIO
 class CommandError(Exception):
     pass
 
+# Default URL for production server
 DefaultURL = 'https://kbase.us/services/cbd/'
+
+'''
+'''
 
 def get_url():
     # Just return the default URL when running in IRIS.
@@ -29,6 +33,9 @@ def get_url():
     else:
         currentURL = DefaultURL;
     return currentURL
+
+'''
+'''
 
 def set_url(newURL):
     # Check for special value for the default URL.
@@ -46,7 +53,10 @@ def set_url(newURL):
         config.write(configfile)
     return newURL
 
-def read_config(filename):
+'''
+'''
+
+def read_config(filename=None):
     # Use default config file if one is not specified.
     if filename == None:
         filename = os.path.join(os.environ['KB_TOP'], 'deployment.cfg')
@@ -66,7 +76,10 @@ def read_config(filename):
 
     return config
 
-def get_config(filename):
+'''
+'''
+
+def get_config(filename=None):
     # Read the config file.
     config = read_config(filename)
 
@@ -76,11 +89,32 @@ def get_config(filename):
         sectionConfig[nameval[0]] = nameval[1]
     return sectionConfig
 
+'''
+'''
+
 def make_job_dir(workDirectory, jobID):
     jobDirectory = os.path.join(workDirectory, jobID)
     if not os.path.exists(jobDirectory):
         os.makedirs(jobDirectory, 0775)
     return jobDirectory
+
+''' Extract sequences from a sequence file.
+
+    The args dictionary includes the following keys:
+
+    sourceFile Path to input sequence file
+    format Format of input sequence file
+    destFile Path to output file with raw sequence reads
+    sequenceLen Minimum length to trim reads to (0 means to not trim)
+    maxReads Maximum number of reads to include in output file (0 for no maximum)
+    minReads Minimum number of reads to include in output file (0 for no minimum)
+    nodeId Node ID of sequence file in Shock (when set file is downloaded from Shock)
+    shockURL URL of Shock server endpoint
+    auth Authorization token for user
+
+    @param args Dictionary of argument values
+    @return 0 when successful
+'''
 
 def extract_seq(args):
     # Download the file from Shock to the working directory.
@@ -117,7 +151,13 @@ def extract_seq(args):
         os.remove(args['destFile'])
     return 0
 
-''' Run a command in a new process. '''
+''' Run a command in a new process.
+
+    @param args List of arguments for command where the first element is the path to the command
+    @raise CommandError: Error running command
+    @raise OSError: Error starting command
+    @return 0 when successful
+'''
 
 def run_command(args):
     err = CommandError()
@@ -144,7 +184,10 @@ def run_command(args):
     return 0
 
 ''' Get a timestamp in the format required by user and job state service.
-    Add deltaSeconds to the current time to get a time in the future. '''
+
+    @param deltaSeconds Number of seconds to add to the current time to get a time in the future
+    @return Timestamp string
+'''
 
 def timestamp(deltaSeconds):
     # Just UTC timestamps to avoid timezone issues.
@@ -172,7 +215,12 @@ def job_info_dict(infoTuple):
     info['results'] = infoTuple[13]
     return info
 
-''' Parse the input file for building a matrix. '''
+''' Parse the input file for building a matrix.
+
+    @param inputPath Path to input file with list of files
+    @raise IOError: Error opening input file
+    @return List of paths to sequence files, dictionary of file extensions, number of missing files
+'''
 
 def parse_input_file(inputPath):
     # Open the input file with the list of files.
@@ -203,6 +251,14 @@ def parse_input_file(inputPath):
         print "%d files are not accessible. Update %s with correct file names" %(numMissingFiles, inputPath)
 
     return fileList, extensions, numMissingFiles
+
+''' Start a job to build a matrix.
+
+    @param config Dictionary of configuration variables
+    @param context Dictionary of current context variables
+    @param input Dictionary of input variables
+    @return Job ID
+'''
 
 def start_job(config, context, input):
     # Create a user and job state client and authenticate as the user.
