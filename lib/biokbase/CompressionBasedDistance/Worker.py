@@ -215,7 +215,7 @@ class CompressionBasedDistance:
         compressedList = []
         for sourceFile in sortedList:
             compressedList.append(sourceFile+'.xz')
-            args = [ '/usr/bin/xz', '--keep', '-9e', sourceFile ]
+            args = [ '/usr/bin/xz', '--keep', '-9e', '--no-warn', sourceFile ]
             result = pool.apply_async(run_command, (args,))
             resultList.append(result)
         for result in resultList:
