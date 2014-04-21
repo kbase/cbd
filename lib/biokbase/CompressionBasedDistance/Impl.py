@@ -68,16 +68,15 @@ the communities are completely different.
         #END_CONSTRUCTOR
         pass
 
-    ''' Submit a job to build a distance matrix.
-
-        @param input Dictionary of input variables (see spec file for valid keys)
-        @return Job ID
-    '''
-
     def build_matrix(self, input):
         # self.ctx is set by the wsgi application class
         # return variables are: job_id
         #BEGIN build_matrix
+        ''' Submit a job to build a distance matrix.
+
+            @param input Dictionary of input variables (see spec file for valid keys)
+            @return Job ID
+        '''
         
         if 'file_paths' not in input:
             input['file_paths'] = list()
