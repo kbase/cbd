@@ -172,6 +172,7 @@ class CompressionBasedDistance:
         
         # Create a work directory for storing intermediate files.
         self.jobDirectory = make_job_dir(self.config['work_folder_path'], job['id'])
+        self._log(log.INFO, 'Job '+job['id']+' running with work folder '+self.jobDirectory)
 
         # Download input fasta files from Shock and extract sequences to work directory.
         try:
@@ -337,6 +338,7 @@ class CompressionBasedDistance:
         # Mark the job as complete.
         results = { 'shocknodes': [ node['id'] ], 'shockurl': self.config['shock_url'] }
         ujsClient.complete_job(job['id'], self.context['token'], 'done', None, results)
+        self._log(log.INFO, 'Job '+job['id']+' completed successfully')
 
         # Cleanup after ourselves.
         self._cleanup()
