@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 import time
-from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
+from shock import Client as ShockClient
 from ConfigParser import ConfigParser
 from Bio import SeqIO
 

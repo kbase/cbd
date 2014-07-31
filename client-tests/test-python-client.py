@@ -6,7 +6,7 @@ import subprocess
 import shutil
 from biokbase.CompressionBasedDistance.Client import CompressionBasedDistance
 from biokbase.CompressionBasedDistance.Helpers import get_config
-from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
+from shock import Client as ShockClient
 
 InputFiles = [ 'client-tests/1_V2.fasta', 'client-tests/2_V2.fasta', 'client-tests/3_V2.fasta', 'client-tests/4_V2.fasta' ]
 

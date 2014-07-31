@@ -3,7 +3,7 @@ import sys
 import os
 import time
 import traceback
-from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
+from shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Helpers import job_info_dict
 from biokbase.userandjobstate.client import UserAndJobState, ServerError as JobStateServerError
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
        
     # Download the output to the specified file and remove the file from shock.
     shockClient.download_to_path(info['results']['shocknodes'][0], args.outputPath)
-    shockClient.delete(info['results']['shocknodes'][0])
+    shockClient.delete_node(info['results']['shocknodes'][0])
     
     # Delete the job.
     ujsClient.delete_job(args.jobID)

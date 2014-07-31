@@ -2,7 +2,7 @@ import os
 import numpy
 import shutil
 import json
-from biokbase.CompressionBasedDistance.Shock import Client as ShockClient
+from shock import Client as ShockClient
 from biokbase.CompressionBasedDistance.Helpers import extract_seq, run_command, make_job_dir, timestamp
 from biokbase.userandjobstate.client import UserAndJobState
 from multiprocessing import Pool
@@ -77,7 +77,7 @@ class CompressionBasedDistance:
     def _cleanup(self, input, shockClient, jobDirectory, pool):
         # Delete input fasta files from Shock.
         for nodeId in input['node_ids']:
-            shockClient.delete(nodeId)
+            shockClient.delete_node(nodeId)
             
         # Remove the work directory.
         shutil.rmtree(jobDirectory)
