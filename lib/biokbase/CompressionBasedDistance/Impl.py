@@ -68,8 +68,8 @@ the communities are completely different.
         #END_CONSTRUCTOR
         pass
 
-    def build_matrix(self, input):
-        # self.ctx is set by the wsgi application class
+    def build_matrix(self, ctx, input):
+        # ctx is the context object
         # return variables are: job_id
         #BEGIN build_matrix
         ''' Submit a job to build a distance matrix.
@@ -80,12 +80,12 @@ the communities are completely different.
         
         if 'file_paths' not in input:
             input['file_paths'] = list()
-        job_id = start_job(self.config, self.ctx, input)
-        self.ctx.log_info('Started job '+job_id+' to build a matrix')
+        job_id = start_job(self.config, ctx, input)
+        ctx.log_info('Started job '+job_id+' to build a matrix')
         
         #END build_matrix
 
-        #At some point might do deeper type checking...
+        # At some point might do deeper type checking...
         if not isinstance(job_id, basestring):
             raise ValueError('Method build_matrix return value ' +
                              'job_id is not type basestring as required.')

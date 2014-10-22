@@ -7,7 +7,11 @@ from cogent.phylo.nj import nj
 import matplotlib
 from scipy.cluster.hierarchy import dendrogram, linkage
 import scipy.spatial.distance as ssd
-import rpy2.robjects as ro
+# MDS import rpy2.robjects as ro
+
+# MDS plots depend on the rpy2 Python package which must be built for the version
+# of R that is installed.  Still working out the dependencies for using the KBase
+# runtime so the MDS plot support is disabled.
 
 desc1 = '''
 NAME
@@ -53,27 +57,33 @@ DESCRIPTION
       specifies a semicolon delimited list of options for controlling the plot.
       The valid options are 'labelsize', 'count_sort', and 'orientation'.
 
-      For a 'mds' type of plot, the supported optional arguments are --title,
-      --labels, --colors, --file-options, --plot-options.  The --title optional
-      argument specifies the title to place on the plot.  The default title is
-      'MDS'.  The --labels optional argument specifies the source for labeling
-      the points in the plot.  The valid values are 'input' to use the value
-      from the third field of the input list file, 'source' to use the headings
-      from the source distance matrix, and 'none' for no labels.  The default
-      value is 'source'.  The --input-file-path optional argument must be
-      specified when using 'input' for the labels.  The --file-options optional
-      argument specifies a semicolon delimited list of options for controlling
-      the output file.  Any options supported by the R pdf() function can be
-      used.  The --plot-options optional argument specifies a semicolon
-      delimited list of options for controlling the plot.  Any options supported
-      by the R plot() function can be used.  Options that start with 'text.' are
-      used to control the text labels on the plot.  The --colors optional
-      argument is a semicolon delimited list of groups and colors.  A point from
-      a sample with the specified group is drawn with the specified color.  The
-      default color is black.  The --input-file-path optional argument must be
-      specified when using the --colors optional argument.
-
 '''
+# MDS Help text for MDS plots
+#       For a 'mds' type of plot, the supported optional arguments are --title,
+#       --labels, --colors, --file-options, --plot-options.  The --title optional
+#       argument specifies the title to place on the plot.  The default title is
+#       'MDS'.  The --labels optional argument specifies the source for labeling
+#       the points in the plot.  The valid values are 'input' to use the value
+#       from the third field of the input list file, 'source' to use the headings
+#       from the source distance matrix, and 'none' for no labels.  The default
+#       value is 'source'.  The --input-file-path optional argument must be
+#       specified when using 'input' for the labels.  The --file-options optional
+#       argument specifies a semicolon delimited list of options for controlling
+#       the output file.  Any options supported by the R pdf() function can be
+#       used.  The --plot-options optional argument specifies a semicolon
+#       delimited list of options for controlling the plot.  Any options supported
+#       by the R plot() function can be used.  Options that start with 'text.' are
+#       used to control the text labels on the plot.  The --colors optional
+#       argument is a semicolon delimited list of groups and colors.  A point from
+#       a sample with the specified group is drawn with the specified color.  The
+#       default color is black.  The --input-file-path optional argument must be
+#       specified when using the --colors optional argument.
+
+# MDS Example for MDS plot
+#       Generate a MDS plot using the input list file for the labels:
+#       > cbd-plotmatrix --type mds --labels input --input-file-path mystudy.list
+#           --file-options 'height=5.0;width=5.0' --plot-options 'pch=19;text.col=blue'
+#           --colors 'day1=blue;day7=orange' mystudy.csv mystudy.pdf
 
 desc3 = '''
 EXAMPLES
@@ -86,11 +96,6 @@ EXAMPLES
       Generate a dendrogram plot using the centroid method and with a title:
       > cbd-plotmatrix --type dendrogram --method centroid --title 'My Plot'
           --plot-options label_size=8 mystudy.csv mystudy.pdf
-
-      Generate a MDS plot using the input list file for the labels:
-      > cbd-plotmatrix --type mds --labels input --input-file-path mystudy.list
-          --file-options 'height=5.0;width=5.0' --plot-options 'pch=19;text.col=blue'
-          --colors 'day1=blue;day7=orange' mystudy.csv mystudy.pdf
 
 SEE ALSO
       cbd-buildmatrix
@@ -397,7 +402,7 @@ if __name__ == "__main__":
         fields = line.split(',')
         fields.pop(0) # Remove the first field which is the ID
         for index in range(0,len(fields)):
-            sourceArray[row,index] = float(fields[index]) * float(fields[index])
+            sourceArray[row,index] = float(fields[index])
         row += 1
     sourceFile.close()
     
@@ -411,9 +416,11 @@ if __name__ == "__main__":
         plot_dendrogram(sourceArray, idList, args)
 
     elif args.type == 'mds':
-        if args.title is None:
-            args.title = 'MDS'
-        plot_mds(idList, args)
+        print 'Metric dimensional scaling plots are not currently supported.'
+        exit(1)
+# MDS        if args.title is None:
+# MDS            args.title = 'MDS'
+# MDS        plot_mds(idList, args)
 
     else:
         print "Plot type '%s' is not supported" %(args.type)
