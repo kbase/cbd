@@ -162,7 +162,7 @@ if __name__ == "__main__":
             traceback.print_exc(file=sys.stdout)
         # Delete all of the input files from shock if something went wrong.
         for nodeId in input['node_ids']:
-            shockClient.delete(nodeId)
+            shockClient.delete_node(nodeId)
         exit(1)
 
     print "Job '%s' submitted" %(jobid)
