@@ -14,7 +14,7 @@ class TestPythonClient(unittest.TestCase):
 
     def setUp(self):
         # Set configuration variables.
-        self._config = get_config(os.environ["KB_TEST_CONFIG"])
+        self._config = get_config(os.environ['KB_TEST_CONFIG'])
 
         # Login as the test user and save current login credentials.
         configPath = os.path.join(os.environ['HOME'], '.kbase_config')
@@ -37,7 +37,7 @@ class TestPythonClient(unittest.TestCase):
         ''' Run build_matrix() with four simple sequence files and verify the returned distance matrix.'''
 
         # Create a client.
-        cbdClient = CompressionBasedDistance(self._config["cbd_url"], user_id=self._config["test_user"], password=self._config["test_pwd"])
+        cbdClient = CompressionBasedDistance(self._config['cbd_url'], user_id=self._config['test_user'], password=self._config['test_pwd'])
         token = cbdClient._headers['AUTHORIZATION']
         
         # Create the input parameters.
@@ -82,10 +82,18 @@ class TestPythonClient(unittest.TestCase):
         vf.close()
         tf.close()
         os.remove(outputPath)
-        
+
+    def test_version(self):
+        ''' Verify the version() method returns correct data. '''
+        cbdClient = CompressionBasedDistance(self._config['cbd_url'], user_id=self._config['test_user'], password=self._config['test_pwd'])
+        serverInfo = cbdClient.version()
+        self.assertEqual(serverInfo[0], 'CompressionBasedDistance')
+        self.assertEqual(serverInfo[1], '1.4')
+
 if __name__ == '__main__':
     # Create a suite, add tests to the suite, run the suite.
     suite = unittest.TestSuite()
     suite.addTest(TestPythonClient('test_buildmatrix'))
+    suite.addTest(TestPythonClient('test_version'))
     unittest.TextTestRunner().run(suite)
     

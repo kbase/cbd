@@ -68,13 +68,34 @@ the communities are completely different.
         #END_CONSTRUCTOR
         pass
 
+    def version(self, ctx):
+        # ctx is the context object
+        # return variables are: returnVal
+        #BEGIN version
+        ''' Return the name and version number of the service.
+
+            @param ctx: Current context object
+            @return List with service name string and version number string
+        '''
+
+        returnVal = [ os.environ.get('KB_SERVICE_NAME'), VERSION ]
+        #END version
+
+        # At some point might do deeper type checking...
+        if not isinstance(returnVal, list):
+            raise ValueError('Method version return value ' +
+                             'returnVal is not type list as required.')
+        # return the results
+        return [returnVal]
+
     def build_matrix(self, ctx, input):
         # ctx is the context object
         # return variables are: job_id
         #BEGIN build_matrix
         ''' Submit a job to build a distance matrix.
 
-            @param input Dictionary of input variables (see spec file for valid keys)
+            @param ctx: Current context object
+            @param input: Dictionary of input variables (see spec file for valid keys)
             @return Job ID
         '''
         

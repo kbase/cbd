@@ -37,7 +37,7 @@ class TestUrlScript(unittest.TestCase):
     def test_default(self):
         '''Run cbd-url default and verify that the default URL is returned.'''
         
-        args = [ self.cmd, "default" ]
+        args = [ self.cmd, "default", "--no-check" ]
         proc = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         (so, se) = proc.communicate()
         self.assertEqual(proc.returncode, 0)

@@ -26,6 +26,11 @@ module CompressionBasedDistance
 	/* All methods are authenticated. */
 	authentication required;
 
+	/*
+		Return the name and version number of the compression-based distance service.
+	*/
+	funcdef version() returns(tuple<string name, string ver>);
+
 	/* Input parameters for build_matrix function
 	
 		list<string> node_ids - List of Shock node ids for input sequence files
